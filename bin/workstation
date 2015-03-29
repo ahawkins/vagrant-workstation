@@ -1,0 +1,113 @@
+#!/usr/bin/env bash
+
+set -eou pipefail
+
+data_dir="${WORKSTATION_HOME:-${HOME}/.workstation}"
+vagrantfile="${WORKSTATION_VAGRANTFILE:-}"
+
+case $1 in
+	up)
+		if [ -z "$vagrantfile" ] || [ ! -f "$vagrantfile" ]; then
+			echo "No Vagrantfile found at WORKSTATION_VAGRANTFILE" 1>&2;
+			exit 1
+		fi
+
+		project_path="${2:-}"
+
+		if [ -z "$project_path" ]; then
+			echo "PROJECT_PATH missing" 1>&2
+			exit 1
+		fi
+
+		if [ ! -d "$project_path" ]; then
+			echo "${project_path} not a directory" 1>&2
+			exit 1
+		fi
+
+		shift ; shift
+
+		mkdir -p "$data_dir"
+		echo "$project_path" > "${data_dir}/project_root"
+
+		echo "Using Vagrantfile: ${vagrantfile}"
+
+		export VAGRANT_CWD="$(dirname "$vagrantfile")"
+		export WORKSTATION_PROJECT_PATH="$project_path"
+
+		vagrant up "$@"
+		vagrant ssh-config > "${data_dir}/ssh_config"
+
+		echo "Booted workstation for projects in ${project_path}"
+		;;
+	run)
+		shift
+
+		ssh_config="${data_dir}/ssh_config"
+
+		if [ ! -f "$ssh_config" ]; then
+			echo "No SSH config. Run boot and try again." 1>&2
+			exit 1
+		fi
+
+		project_path=$(cat "${data_dir}/project_root")
+		project=
+
+		while getopts ":p:" opt; do
+			case $opt in
+				p)
+					matches=$(find "$project_path" -type d -maxdepth 1 -name "*$OPTARG*")
+
+					if [ $(echo "$matches" | wc -l) -eq 1 ]; then
+						project="$(basename "$matches")"
+					else
+						echo "${OPTARG} matched too many projects:" 2>&1
+						echo "$matches" 2>&1
+						exit 1
+					fi
+					;;
+				\?)
+					echo "Invalid option: -$OPTARG" 1>&2
+					exit 1
+					;;
+			esac
+		done
+
+		shift $((OPTIND-1))
+
+		if [ $# -eq 0 ]; then
+			echo "No command given" 1>&2
+			exit 1
+		fi
+
+		if [ -z "$project" ]; then
+			cwd=$PWD
+			while [ "$(dirname $cwd)" != "$project_path" ] && [ "$cwd" != / ]; do
+				echo $cwd
+				cwd="$(dirname "$cwd")"
+			done
+
+			if [ "$cwd" != / ]; then
+				project="$(basename "$cwd")"
+			fi
+		fi
+
+		if [ -z "$project" ]; then
+			echo "Cannot determine project for ${PWD}. Provide -p PROJECT or change directory." 1>&2
+			exit 1
+		fi
+
+		if ! ssh -q -F "$ssh_config" default true; then
+			echo "SSH config stale. Run reload and try again." 1>&2
+			exit 1
+		fi
+
+		internal_directory="/projects/${project}"
+		exec ssh -t -t -q -F "$ssh_config" default -- "cd ${internal_directory} && bash -l -c '$@'"
+
+		;;
+	*)
+		usage
+		exit 1
+
+		;;
+esac
