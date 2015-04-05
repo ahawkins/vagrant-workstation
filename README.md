@@ -59,4 +59,13 @@ Install [vagrant][] & [bats][]. Then run:
 
 	$ make test
 
-[Pandoc][] should also be installed for working on the manual.
+## Contributing
+
+1. Fork it ( https://github.com/ahawkins/vagrant-workstation/fork )
+2. Create your feature branch (`git checkout -b my-new-feature`)
+3. Commit your changes (`git commit -am 'Add some feature'`)
+4. Push to the branch (`git push origin my-new-feature`)
+5. Create a new Pull Request
+
+[vagrant]: https://www.vagrantup.com
+[bats]: https://github.com/sstephenson/bats

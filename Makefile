@@ -12,6 +12,9 @@ ENV=env \
 $(WORKSTATION_PROJECT_PATH):
 	mkdir -p $@
 
+$(WORKSTATION_PROJECT_PATH)/smoke:
+	mkdir -p $@
+
 $(VAGRANT): $(WORKSTATION_PROJECT_PATH)
 	$(ENV) workstation up $<
 	mkdir -p $(@D)
@@ -19,7 +22,17 @@ $(VAGRANT): $(WORKSTATION_PROJECT_PATH)
 
 .PHONY: test
 test: $(VAGRANT)
-	$(ENV) WORKSTATION_PROJECT_PATH=$(WORKSTATION_PROJECT_PATH) bats test/*_test.bats
+	$(ENV) WORKSTATION_PROJECT_PATH=$(WORKSTATION_PROJECT_PATH) bats test
+
+.PHONY: test-smoke
+test-smoke: $(VAGRANT) $(WORKSTATION_PROJECT_PATH)/smoke
+	$(ENV) workstation run -p smoke true
+	$(ENV) workstation suspend
+	$(ENV) workstation halt
+	$(ENV) workstation reload
+	$(ENV) workstation run -p smoke true
+	$(ENV) workstation destroy -f
+	$(MAKE) clean
 
 .PHONY: clean
 clean: 

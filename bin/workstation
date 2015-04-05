@@ -105,9 +105,56 @@ case $1 in
 		exec ssh -t -t -q -F "$ssh_config" default -- "cd ${internal_directory} && bash -l -c '$@'"
 
 		;;
+	reload)
+		if [ -z "$vagrantfile" ] || [ ! -f "$vagrantfile" ]; then
+			echo "No Vagrantfile found at WORKSTATION_VAGRANTFILE" 1>&2
+			exit 1
+		fi
+
+		if [ ! -e "${data_dir}/project_root" ]; then
+			echo "Workstation not booted. Run the up command and try again" 1>&2
+			exit 1
+		fi
+
+		export VAGRANT_CWD="$(dirname "$vagrantfile")"
+		export WORKSTATION_PROJECT_PATH="$(cat "${data_dir}/project_root")"
+
+		vagrant reload
+		vagrant ssh-config > "${data_dir}/ssh_config"
+
+		;;
+	destroy)
+		if [ -z "$vagrantfile" ] || [ ! -f "$vagrantfile" ]; then
+			echo "No Vagrantfile found at WORKSTATION_VAGRANTFILE" 1>&2;
+			exit 1
+		fi
+
+		export VAGRANT_CWD="$(dirname "$vagrantfile")"
+
+		vagrant $@
+
+		rm -rf "${data_dir}/ssh_config"
+		rm -rf "${data_dir}/project_root"
+
+		;;
+	halt|suspend|status|ssh-config|ssh)
+		if [ -z "$vagrantfile" ] || [ ! -f "$vagrantfile" ]; then
+			echo "No Vagrantfile found at WORKSTATION_VAGRANTFILE" 1>&2;
+			exit 1
+		fi
+
+		export VAGRANT_CWD="$(dirname "$vagrantfile")"
+
+		exec vagrant $@
+
+		;;
 	*)
-		usage
-		exit 1
+		if [ -e "${data_dir}/commands/${1}" ]; then
+			exec $0 run "$(cat "${data_dir}/commands/${1}")"
+		else
+			usage
+			exit 1
+		fi
 
 		;;
 esac

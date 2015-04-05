@@ -1,12 +1,22 @@
 #!/usr/bin/env bats
 
 setup() {
-	rm -rf "${WORKSTATION_PROJECT_PATH}"/*
+	# NOTE: This setting will cause failures if a variable is undefined.
+	# If this does happen, no output is printed to the screen because
+	# the process exists outside of bats expected loop.
+	set -u
+	rm -rf "${WORKSTATION_PROJECT_PATH}"
+	rm -rf "${WORKSTATION_HOME}/commands"
+	mkdir -p "${WORKSTATION_PROJECT_PATH}"
+}
+
+teardown() {
+	set +u
 }
 
 @test "fails if no command given" {
 	mkdir -p "${WORKSTATION_PROJECT_PATH}/foo"
-	cat > "${WORKSTATION_PROJECT_PATH}/foo/cmd" << EOF
+	cat > "${WORKSTATION_PROJECT_PATH}/foo/cmd" <<EOF
 	#!/usr/bin/env bash
 	set -eou pipefail
 	echo bar
@@ -21,7 +31,7 @@ EOF
 
 @test "run executes command in matching project directory" {
 	mkdir -p "${WORKSTATION_PROJECT_PATH}/foo"
-	cat > "${WORKSTATION_PROJECT_PATH}/foo/cmd" << EOF
+	cat > "${WORKSTATION_PROJECT_PATH}/foo/cmd" <<EOF
 	#!/usr/bin/env bash
 	set -eou pipefail
 	echo bar
@@ -37,7 +47,7 @@ EOF
 
 @test "run accepts -p to specify project" {
 	mkdir -p "${WORKSTATION_PROJECT_PATH}/foo"
-	cat > "${WORKSTATION_PROJECT_PATH}/foo/cmd" << EOF
+	cat > "${WORKSTATION_PROJECT_PATH}/foo/cmd" <<EOF
 	#!/usr/bin/env bash
 	set -eou pipefail
 	echo foo-project
@@ -45,7 +55,7 @@ EOF
 	chmod +x "${WORKSTATION_PROJECT_PATH}/foo/cmd"
 
 	mkdir -p "${WORKSTATION_PROJECT_PATH}/bar"
-	cat > "${WORKSTATION_PROJECT_PATH}/bar/cmd" << EOF
+	cat > "${WORKSTATION_PROJECT_PATH}/bar/cmd" <<EOF
 	#!/usr/bin/env bash
 	set -eou pipefail
 	echo bar-project
@@ -65,7 +75,7 @@ EOF
 
 @test "run -p does fuzzy matching" {
 	mkdir -p "${WORKSTATION_PROJECT_PATH}/foo"
-	cat > "${WORKSTATION_PROJECT_PATH}/foo/cmd" << EOF
+	cat > "${WORKSTATION_PROJECT_PATH}/foo/cmd" <<EOF
 	#!/usr/bin/env bash
 	set -eou pipefail
 	echo foo-project
@@ -73,7 +83,7 @@ EOF
 	chmod +x "${WORKSTATION_PROJECT_PATH}/foo/cmd"
 
 	mkdir -p "${WORKSTATION_PROJECT_PATH}/bar"
-	cat > "${WORKSTATION_PROJECT_PATH}/bar/cmd" << EOF
+	cat > "${WORKSTATION_PROJECT_PATH}/bar/cmd" <<EOF
 	#!/usr/bin/env bash
 	set -eou pipefail
 	echo bar-project
@@ -99,7 +109,7 @@ EOF
 
 @test "run -p fails if multiple fuzzy matches" {
 	mkdir -p "${WORKSTATION_PROJECT_PATH}/foo-bar"
-	cat > "${WORKSTATION_PROJECT_PATH}/foo-bar/cmd" << EOF
+	cat > "${WORKSTATION_PROJECT_PATH}/foo-bar/cmd" <<EOF
 	#!/usr/bin/env bash
 	set -eou pipefail
 	echo foo-bar-project
@@ -107,7 +117,7 @@ EOF
 	chmod +x "${WORKSTATION_PROJECT_PATH}/foo-bar/cmd"
 
 	mkdir -p "${WORKSTATION_PROJECT_PATH}/foo-baz"
-	cat > "${WORKSTATION_PROJECT_PATH}/foo-baz/cmd" << EOF
+	cat > "${WORKSTATION_PROJECT_PATH}/foo-baz/cmd" <<EOF
 	#!/usr/bin/env bash
 	set -eou pipefail
 	echo foo-baz-project
@@ -132,7 +142,7 @@ EOF
 
 @test "recurses up directories to find project from CWD" {
 	mkdir -p "${WORKSTATION_PROJECT_PATH}/foo/bar/baz/qux"
-	cat > "${WORKSTATION_PROJECT_PATH}/foo/cmd" << EOF
+	cat > "${WORKSTATION_PROJECT_PATH}/foo/cmd" <<EOF
 	#!/usr/bin/env bash
 	set -eou pipefail
 	echo OK
@@ -142,13 +152,11 @@ EOF
 	cd "${WORKSTATION_PROJECT_PATH}/foo/bar/baz/qux"
 	run workstation run ./cmd
 
-	echo "$output"
-
 	[ $status -eq 0 ]
 	echo "$output" | grep -q OK
 }
 
-@test "fails if project cannot be determed from CWD" {
+@test "fails if project cannot be determined from CWD" {
 	skip
 }
 
@@ -161,8 +169,17 @@ EOF
 	[ $status -eq 0 ]
 }
 
-# Extend with custom run commands, eg define something that shortcuts
-# workstation make to be like workstation run make
+@test "includes correct ssh options" {
+	skip
+}
 
-# Workstation specific commands. Create some file in some directory
-# (e.g) .workstation/my-command, then you can $ workstation my-command
+@test "supports custom aliases" {
+	mkdir -p "${WORKSTATION_HOME}/commands"
+	echo "true" > "${WORKSTATION_HOME}/commands/foo"
+
+	mkdir -p "${WORKSTATION_PROJECT_PATH}/foo"
+	cd "${WORKSTATION_PROJECT_PATH}/foo"
+
+	run workstation foo
+	[ $status -eq 0 ]
+}
