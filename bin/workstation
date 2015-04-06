@@ -2,8 +2,26 @@
 
 set -eou pipefail
 
-data_dir="${WORKSTATION_HOME:-${HOME}/.workstation}"
-vagrantfile="${WORKSTATION_VAGRANTFILE:-}"
+declare -r WORKSTATION_ROOT=$(cd "${API_SANDBOX_DIR:-"$(dirname $0)/.."}"; pwd)
+
+declare -r data_dir="${WORKSTATION_HOME:-${HOME}/.workstation}"
+declare -r vagrantfile="${WORKSTATION_VAGRANTFILE:-}"
+
+version() {
+  cat "${WORKSTATION_ROOT}/VERSION"
+}
+
+usage() {
+  version
+  echo "Usage: workstation <command> [OPTIONS]"
+}
+
+help() {
+  usage
+  cat "${WORKSTATION_ROOT}/HELP"
+}
+
+# Pick out global options for help that are not part of the general CLI
 
 case $1 in
 	up)
@@ -146,6 +164,15 @@ case $1 in
 		export VAGRANT_CWD="$(dirname "$vagrantfile")"
 
 		exec vagrant $@
+
+		;;
+
+	version|--version)
+		version
+
+		;;
+	help|--help)
+		help
 
 		;;
 	*)
