@@ -8,7 +8,7 @@
 EOF
 	chmod +x "${scratch}/vagrant"
 
-	[ ! -e "${scratch}/project_root" ] # precondition
+	[ ! -e "${scratch}/project_path" ] # precondition
 
 	run env PATH="${scratch}:$PATH" WORKSTATION_HOME="$scratch" workstation reload
 	[ $status -eq 1 ]
@@ -45,7 +45,7 @@ EOF
 
 @test "reload executes vagrant reload with correct WORKSATION_PROJECT_PATH" {
 	scratch="$(mktemp -d -t workstation)"
-	echo -n "/foo/bar" > "${scratch}/project_root"
+	echo -n "/foo/bar" > "${scratch}/project_path"
 
 	cat > "${scratch}/vagrant" <<'EOF'
 	#!/usr/bin/env bash
@@ -71,7 +71,7 @@ EOF
 	echo fake-ssh-config
 EOF
 	chmod +x "${scratch}/vagrant"
-	echo "/foo/bar" > "${scratch}/project_root"
+	echo "/foo/bar" > "${scratch}/project_path"
 
 	run env PATH="${scratch}:$PATH" WORKSTATION_HOME="$scratch" workstation reload
 	[ $status -eq 0 ]

@@ -5,8 +5,11 @@ setup() {
 	# If this does happen, no output is printed to the screen because
 	# the process exists outside of bats expected loop.
 	set -u
+
+	rm -rf "${WORKSTATION_PROJECT_PATH}/commands"
 	rm -rf "${WORKSTATION_PROJECT_PATH}"
 	rm -rf "${WORKSTATION_HOME}/commands"
+
 	mkdir -p "${WORKSTATION_PROJECT_PATH}"
 }
 
@@ -181,5 +184,18 @@ EOF
 	cd "${WORKSTATION_PROJECT_PATH}/foo"
 
 	run workstation foo
+	[ $status -eq 0 ]
+}
+
+@test "support custom aliases defined in PROJECT_PATH" {
+	mkdir -p "${WORKSTATION_PROJECT_PATH}/.workstation/commands"
+	echo "true" > "${WORKSTATION_PROJECT_PATH}/.workstation/commands/foo"
+
+	mkdir -p "${WORKSTATION_PROJECT_PATH}/foo/bar/baz/qux"
+	cd "${WORKSTATION_PROJECT_PATH}/foo/bar/baz/qux"
+
+	run workstation foo
+	echo "$output"
+
 	[ $status -eq 0 ]
 }

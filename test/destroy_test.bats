@@ -42,18 +42,18 @@ EOF
 	[ ! -e "${scratch}/ssh_config" ]
 }
 
-@test "destroy deletes project root artifatc" {
+@test "destroy deletes project path artifcat" {
 	scratch="$(mktemp -d -t workstation)"
 	cat > "${scratch}/vagrant" <<'EOF'
 	#!/usr/bin/env bash
 	exit 0
 EOF
 	chmod +x "${scratch}/vagrant"
-	touch "${scratch}/project_root"
+	touch "${scratch}/project_path"
 
 	run env PATH="${scratch}:$PATH" WORKSTATION_HOME="$scratch" workstation destroy
 	[ $status -eq 0 ]
-	[ ! -e "${scratch}/project_root" ]
+	[ ! -e "${scratch}/project_path" ]
 }
 
 @test "destroy executes vagrant destroy" {
