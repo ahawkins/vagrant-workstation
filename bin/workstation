@@ -4,8 +4,8 @@ set -eou pipefail
 
 declare -r WORKSTATION_ROOT=$(cd "${API_SANDBOX_DIR:-"$(dirname $0)/.."}"; pwd)
 
-declare -r data_dir="${WORKSTATION_HOME:-${HOME}/.workstation}"
-declare -r vagrantfile="${WORKSTATION_VAGRANTFILE:-}"
+declare -r DATA_DIR="${WORKSTATION_HOME:-${HOME}/.workstation}"
+declare -r VAGRANTFILE="${WORKSTATION_VAGRANTFILE:-}"
 
 version() {
   cat "${WORKSTATION_ROOT}/VERSION"
@@ -21,12 +21,10 @@ help() {
   cat "${WORKSTATION_ROOT}/HELP"
 }
 
-# Pick out global options for help that are not part of the general CLI
-
 case $1 in
 	up)
-		if [ -z "$vagrantfile" ] || [ ! -f "$vagrantfile" ]; then
-			echo "No Vagrantfile found at WORKSTATION_VAGRANTFILE" 1>&2;
+		if [ -z "$VAGRANTFILE" ] || [ ! -f "$VAGRANTFILE" ]; then
+			echo "No VAGRANTFILE found at WORKSTATION_VAGRANTFILE" 1>&2;
 			exit 1
 		fi
 
@@ -44,30 +42,30 @@ case $1 in
 
 		shift ; shift
 
-		mkdir -p "$data_dir"
-		echo "$project_path" > "${data_dir}/project_root"
+		mkdir -p "$DATA_DIR"
+		echo "$project_path" > "${DATA_DIR}/project_root"
 
-		echo "Using Vagrantfile: ${vagrantfile}"
+		echo "Using VAGRANTFILE: ${VAGRANTFILE}"
 
-		export VAGRANT_CWD="$(dirname "$vagrantfile")"
+		export VAGRANT_CWD="$(dirname "$VAGRANTFILE")"
 		export WORKSTATION_PROJECT_PATH="$project_path"
 
 		vagrant up "$@"
-		vagrant ssh-config > "${data_dir}/ssh_config"
+		vagrant ssh-config > "${DATA_DIR}/ssh_config"
 
 		echo "Booted workstation for projects in ${project_path}"
 		;;
 	run)
 		shift
 
-		ssh_config="${data_dir}/ssh_config"
+		ssh_config="${DATA_DIR}/ssh_config"
 
 		if [ ! -f "$ssh_config" ]; then
 			echo "No SSH config. Run boot and try again." 1>&2
 			exit 1
 		fi
 
-		project_path=$(cat "${data_dir}/project_root")
+		project_path=$(cat "${DATA_DIR}/project_root")
 		project=
 
 		while getopts ":p:" opt; do
@@ -124,44 +122,44 @@ case $1 in
 
 		;;
 	reload)
-		if [ -z "$vagrantfile" ] || [ ! -f "$vagrantfile" ]; then
-			echo "No Vagrantfile found at WORKSTATION_VAGRANTFILE" 1>&2
+		if [ -z "$VAGRANTFILE" ] || [ ! -f "$VAGRANTFILE" ]; then
+			echo "No VAGRANTFILE found at WORKSTATION_VAGRANTFILE" 1>&2
 			exit 1
 		fi
 
-		if [ ! -e "${data_dir}/project_root" ]; then
+		if [ ! -e "${DATA_DIR}/project_root" ]; then
 			echo "Workstation not booted. Run the up command and try again" 1>&2
 			exit 1
 		fi
 
-		export VAGRANT_CWD="$(dirname "$vagrantfile")"
-		export WORKSTATION_PROJECT_PATH="$(cat "${data_dir}/project_root")"
+		export VAGRANT_CWD="$(dirname "$VAGRANTFILE")"
+		export WORKSTATION_PROJECT_PATH="$(cat "${DATA_DIR}/project_root")"
 
 		vagrant reload
-		vagrant ssh-config > "${data_dir}/ssh_config"
+		vagrant ssh-config > "${DATA_DIR}/ssh_config"
 
 		;;
 	destroy)
-		if [ -z "$vagrantfile" ] || [ ! -f "$vagrantfile" ]; then
-			echo "No Vagrantfile found at WORKSTATION_VAGRANTFILE" 1>&2;
+		if [ -z "$VAGRANTFILE" ] || [ ! -f "$VAGRANTFILE" ]; then
+			echo "No VAGRANTFILE found at WORKSTATION_VAGRANTFILE" 1>&2;
 			exit 1
 		fi
 
-		export VAGRANT_CWD="$(dirname "$vagrantfile")"
+		export VAGRANT_CWD="$(dirname "$VAGRANTFILE")"
 
 		vagrant $@
 
-		rm -rf "${data_dir}/ssh_config"
-		rm -rf "${data_dir}/project_root"
+		rm -rf "${DATA_DIR}/ssh_config"
+		rm -rf "${DATA_DIR}/project_root"
 
 		;;
 	halt|suspend|status|ssh-config|ssh)
-		if [ -z "$vagrantfile" ] || [ ! -f "$vagrantfile" ]; then
-			echo "No Vagrantfile found at WORKSTATION_VAGRANTFILE" 1>&2;
+		if [ -z "$VAGRANTFILE" ] || [ ! -f "$VAGRANTFILE" ]; then
+			echo "No VAGRANTFILE found at WORKSTATION_VAGRANTFILE" 1>&2;
 			exit 1
 		fi
 
-		export VAGRANT_CWD="$(dirname "$vagrantfile")"
+		export VAGRANT_CWD="$(dirname "$VAGRANTFILE")"
 
 		exec vagrant $@
 
@@ -176,8 +174,8 @@ case $1 in
 
 		;;
 	*)
-		if [ -e "${data_dir}/commands/${1}" ]; then
-			exec $0 run "$(cat "${data_dir}/commands/${1}")"
+		if [ -e "${DATA_DIR}/commands/${1}" ]; then
+			exec $0 run "$(cat "${DATA_DIR}/commands/${1}")"
 		else
 			usage
 			exit 1
