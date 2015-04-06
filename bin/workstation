@@ -12,15 +12,15 @@ version() {
 }
 
 usage() {
-  version
+	version
 	echo
-  echo "Usage: workstation <command> [OPTIONS]"
+	echo "Usage: workstation <command> [OPTIONS]"
 }
 
 help() {
-  usage
+	usage
 	echo
-  cat "${WORKSTATION_ROOT}/HELP"
+	cat "${WORKSTATION_ROOT}/HELP"
 }
 
 case $1 in
