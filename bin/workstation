@@ -8,16 +8,18 @@ declare -r DATA_DIR="${WORKSTATION_HOME:-${HOME}/.workstation}"
 declare -r VAGRANTFILE="${WORKSTATION_VAGRANTFILE:-}"
 
 version() {
-  cat "${WORKSTATION_ROOT}/VERSION"
+	echo "Workstation $(cat "${WORKSTATION_ROOT}/VERSION")"
 }
 
 usage() {
   version
+	echo
   echo "Usage: workstation <command> [OPTIONS]"
 }
 
 help() {
   usage
+	echo
   cat "${WORKSTATION_ROOT}/HELP"
 }
 

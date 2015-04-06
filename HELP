@@ -1,1 +1,75 @@
-Help
+<command> is either a workstation or vagrant command. All options are
+enumerated below.
+
+	up PROJECT_PATH [OPTIONS]
+
+		Boot the workstation for PROJECT_PATH
+
+	run COMMAND [-p PROJECT]
+	
+		Run command in matching project directory. Run executes the command
+		in the matching project directory. This either determined by the
+		current working directory or by the -p option. The PROJECT option
+		may be given as a partial match. For consider PROJECT_PATH includes
+		directories /foo-bar and /foo-baz. Set -p to "baz" and the command
+		will be executed inside /foo-baz. This option allows command
+		execution in the appropriate project inside PROJECT_PATH on the host
+		system.
+
+	reload
+
+		Restart Vagrant
+
+	destroy [OPTIONS]
+
+		Executes `vagrant destroy` with OPTIONS.
+
+	halt [OPTIONS]
+
+		Executes `vagrant halt` with OPTIONS.
+
+	suspend [OPTIONS]
+
+		Executes `vagrant suspend` with OPTIONS.
+
+	status [OPTIONS]
+
+		Executes `vagrant status` with OPTIONS.
+
+	ssh [OPTIONS]
+
+		Executes `vagrant ssh` with OPTIONS.
+
+	ssh-config [OPTIONS]
+
+		Executes `vagrant ssh-config` with OPTIONS.
+
+	CUSTOM
+
+		CUSTOM may also be a custom command. Define a custom command by
+		creating a file in $WORKSTATION_HOME/.commands/COMMAND or
+		PROJECT_ROOT/.commands/COMMAND. (See configuration section below).
+		The content of the file is then passed to run.
+
+		Here's an example.
+		
+			$ echo "make test" > $WORKSTATION_HOME/.commands/test
+			$ workstation test
+
+		This is equivalent to running `workstation run make test` without
+		having to type it everytime.
+
+
+CONFIGURATION
+
+This command also requires the $WORKSTATION_VAGRANTFILE environment
+variable. The variable must be the path to a Vagrantfile. The
+Vagrantfile is used for all interaction with the VM.
+
+This command also creates filesystem artifacts for tracking the
+appropriate vagrant VM. These are kept in "$HOME/.workstation" by
+default. This can be overridden by setting $WORKSTATION_HOME. This
+directory also stores files for custom commands.
+
+See https://github.com/ahawkins/vagrant-workstation for more
+information.
