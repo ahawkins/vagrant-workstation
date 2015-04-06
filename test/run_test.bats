@@ -176,26 +176,50 @@ EOF
 	skip
 }
 
-@test "supports custom aliases" {
-	mkdir -p "${WORKSTATION_HOME}/commands"
-	echo "true" > "${WORKSTATION_HOME}/commands/foo"
+@test "custom aliases defined in PROJECT_PATH" {
+	mkdir -p "${WORKSTATION_PROJECT_PATH}/.workstation/commands"
+	echo "/projects/test-command" > "${WORKSTATION_PROJECT_PATH}/.workstation/commands/test"
+
+	cat > "${WORKSTATION_PROJECT_PATH}/test-command" <<'EOF'
+	#!/usr/bin/env bash
+	set -eou pipefail
+	if [ "$*" = "foo --bar" ]; then
+		echo "OK"
+		exit 0
+	else
+		exit 1
+	fi
+EOF
+	chmod +x "${WORKSTATION_PROJECT_PATH}/test-command"
 
 	mkdir -p "${WORKSTATION_PROJECT_PATH}/foo"
 	cd "${WORKSTATION_PROJECT_PATH}/foo"
 
-	run workstation foo
+	run workstation test foo --bar
 	[ $status -eq 0 ]
+	echo "$output" | grep -q "OK"
 }
 
-@test "support custom aliases defined in PROJECT_PATH" {
-	mkdir -p "${WORKSTATION_PROJECT_PATH}/.workstation/commands"
-	echo "true" > "${WORKSTATION_PROJECT_PATH}/.workstation/commands/foo"
+@test "custom aliases defined in WORKSTATION_HOME" {
+	mkdir -p "${WORKSTATION_HOME}/commands"
+	echo "/projects/test-command" > "${WORKSTATION_HOME}/commands/test"
 
-	mkdir -p "${WORKSTATION_PROJECT_PATH}/foo/bar/baz/qux"
-	cd "${WORKSTATION_PROJECT_PATH}/foo/bar/baz/qux"
+	cat > "${WORKSTATION_PROJECT_PATH}/test-command" <<'EOF'
+	#!/usr/bin/env bash
+	set -eou pipefail
+	if [ "$*" = "foo --bar" ]; then
+		echo "OK"
+		exit 0
+	else
+		exit 1
+	fi
+EOF
+	chmod +x "${WORKSTATION_PROJECT_PATH}/test-command"
 
-	run workstation foo
-	echo "$output"
+	mkdir -p "${WORKSTATION_PROJECT_PATH}/foo"
+	cd "${WORKSTATION_PROJECT_PATH}/foo"
 
+	run workstation test foo --bar
 	[ $status -eq 0 ]
+	echo "$output" | grep -q "OK"
 }

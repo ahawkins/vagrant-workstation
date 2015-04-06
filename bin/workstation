@@ -176,12 +176,17 @@ case $1 in
 		;;
 	*)
 		if [ -e "${DATA_DIR}/commands/${1}" ]; then
-			exec $0 run "$(cat "${DATA_DIR}/commands/${1}")"
+			script="$1"
+			shift
+			exec $0 run "$(cat "${DATA_DIR}/commands/${script}")" $@
 		elif [ -e "${WORKSTATION_HOME}/project_path" ]; then
 			project_path="$(cat "${WORKSTATION_HOME}/project_path")"
 
 			if [ -e "${project_path}/.workstation/commands/${1}" ]; then
-				exec $0 run "$(cat "${project_path}/.workstation/commands/${1}")"
+				script="$1"
+				shift
+
+				exec $0 run "$(cat "${project_path}/.workstation/commands/${script}")" $@
 			else
 				usage
 				exit 1
