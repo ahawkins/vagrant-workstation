@@ -23,7 +23,7 @@ you can customize it for your needs).
 
 1. Clone this repository to your computer
 1. Ensure `bin/` is on `$PATH`
-1. Create a `Vagrantfile` similar to the [example][examples/Vagrantfile].
+1. Create a `Vagrantfile` similar to the [example](examples/Vagrantfile).
 1. Set the `$WORKSTATION_VARANTFILE` environment variable to path of
 	 the file just created.
 1. Create directories containing all projects
