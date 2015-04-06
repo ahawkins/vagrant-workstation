@@ -15,6 +15,8 @@ This became unmanagable because it required too many resources
 `Vargantfile` (save a few port mappings and the like) it was easier to
 combine them into one VM.
 
+You can read more about reasoning behind this project on my [blog][].
+
 ## Installation
 
 This repository contains scripts for working with [vagrant][] VM. It
@@ -67,5 +69,6 @@ Install [vagrant][] & [bats][]. Then run:
 4. Push to the branch (`git push origin my-new-feature`)
 5. Create a new Pull Request
 
+[blog]: http://hawkins.io/2015/04/introducing-vagrant-workstation/
 [vagrant]: https://www.vagrantup.com
 [bats]: https://github.com/sstephenson/bats
