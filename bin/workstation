@@ -194,13 +194,47 @@ case "$subcommand" in
 	*)
 		if [ -n "${subcommand}" ] && [ -e "${DATA_DIR}/commands/${1}" ]; then
 			shift
-			exec $0 run "$(cat "${DATA_DIR}/commands/${subcommand}")" $@
+
+			project=
+
+			while getopts ":p:" opt; do
+				case $opt in
+					p)
+						project="-p ${OPTARG}"
+						;;
+					\?)
+						echo "Invalid option: -$OPTARG" 1>&2
+						exit 1
+						;;
+				esac
+			done
+
+			shift $((OPTIND-1))
+
+			exec $0 run "$project" "$(cat "${DATA_DIR}/commands/${subcommand}")" $@
 		elif [ -n "$subcommand" ] && [ -e "${DATA_DIR}/project_path" ]; then
 			project_path="$(cat "${DATA_DIR}/project_path")"
 
 			if [ -e "${project_path}/.workstation/commands/${1}" ]; then
 				shift
-				exec $0 run "$(cat "${project_path}/.workstation/commands/${subcommand}")" $@
+
+				project=
+
+				while getopts ":p:" opt; do
+					case $opt in
+						p)
+							project="-p ${OPTARG}"
+							;;
+						\?)
+							echo "Invalid option: -$OPTARG" 1>&2
+							exit 1
+							;;
+					esac
+				done
+
+				shift $((OPTIND-1))
+
+				exec $0 run "$project" "$(cat "${project_path}/.workstation/commands/${subcommand}")" $@
 			else
 				usage
 				exit 1
