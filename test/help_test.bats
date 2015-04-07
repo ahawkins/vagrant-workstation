@@ -23,3 +23,9 @@
 	[ $status -eq 0 ]
 	echo "$output" | grep -q "Usage"
 }
+
+@test "prints usage when no args given" {
+	run workstation
+	[ $status -eq 1 ]
+	echo "$output" | grep -q "Usage"
+}
