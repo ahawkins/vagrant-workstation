@@ -30,11 +30,11 @@ endif
 
 .PHONY: test-smoke
 test-smoke: $(VAGRANT) $(WORKSTATION_PROJECT_PATH)/smoke
-	$(ENV) workstation run -p smoke true
+	$(ENV) workstation run -p smoke -- true
 	$(ENV) workstation suspend
 	$(ENV) workstation halt
 	$(ENV) workstation reload
-	$(ENV) workstation run -p smoke true
+	$(ENV) workstation run -p smoke -- true
 	$(ENV) workstation destroy -f
 	$(MAKE) clean
 

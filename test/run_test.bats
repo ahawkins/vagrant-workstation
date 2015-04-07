@@ -223,3 +223,28 @@ EOF
 	[ $status -eq 0 ]
 	echo "$output" | grep -q "OK"
 }
+
+@test "aliases work with -p" {
+	mkdir -p "${WORKSTATION_HOME}/commands"
+	echo "/projects/test-command" > "${WORKSTATION_HOME}/commands/test"
+
+	cat > "${WORKSTATION_PROJECT_PATH}/test-command" <<'EOF'
+	#!/usr/bin/env bash
+	set -eou pipefail
+	if [ "${PWD}" = "/projects/foo" ]; then
+		echo "OK"
+		exit 0
+	else
+		exit 1
+	fi
+EOF
+	chmod +x "${WORKSTATION_PROJECT_PATH}/test-command"
+
+	mkdir -p "${WORKSTATION_PROJECT_PATH}/foo"
+	mkdir -p "${WORKSTATION_PROJECT_PATH}/bar"
+	cd "${WORKSTATION_PROJECT_PATH}/foo"
+
+	run workstation test -p bar
+	[ $status -eq 0 ]
+	echo "$output" | grep -q "OK"
+}

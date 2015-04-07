@@ -51,13 +51,17 @@ case "$subcommand" in
 
 		echo "Using VAGRANTFILE: ${VAGRANTFILE}"
 
-		export VAGRANT_CWD="$(dirname "$VAGRANTFILE")"
 		export WORKSTATION_PROJECT_PATH="$project_path"
+
+		pushd "$(dirname "$VAGRANTFILE")" > /dev/null
 
 		vagrant up "$@"
 		vagrant ssh-config > "${DATA_DIR}/ssh_config"
 
+		popd > /dev/null
+
 		echo "Booted workstation for projects in ${project_path}"
+
 		;;
 	run)
 		shift
@@ -168,6 +172,17 @@ case "$subcommand" in
 
 		;;
 
+	provision)
+		if [ -z "$VAGRANTFILE" ] || [ ! -f "$VAGRANTFILE" ]; then
+			echo "No VAGRANTFILE found at WORKSTATION_VAGRANTFILE" 1>&2;
+			exit 1
+		fi
+
+		cd "$(dirname "$VAGRANTFILE")"
+
+		exec vagrant provision
+
+		;;
 	version|--version)
 		version
 
@@ -180,8 +195,8 @@ case "$subcommand" in
 		if [ -n "${subcommand}" ] && [ -e "${DATA_DIR}/commands/${1}" ]; then
 			shift
 			exec $0 run "$(cat "${DATA_DIR}/commands/${subcommand}")" $@
-		elif [ -n "$subcommand" ] && [ -e "${WORKSTATION_HOME}/project_path" ]; then
-			project_path="$(cat "${WORKSTATION_HOME}/project_path")"
+		elif [ -n "$subcommand" ] && [ -e "${DATA_DIR}/project_path" ]; then
+			project_path="$(cat "${DATA_DIR}/project_path")"
 
 			if [ -e "${project_path}/.workstation/commands/${1}" ]; then
 				shift
