@@ -24,16 +24,13 @@ help() {
 }
 
 identify_alias() {
-	# Global host aliases
-	if [ -e "${DATA_DIR}/commands/${1}" ]; then
-		cat "${DATA_DIR}/commands/${1}"
-
 	# Workstation specific aliases
-	elif [ -e "${DATA_DIR}/project_path" ]; then
-		local project_path="$(cat "${DATA_DIR}/project_path")"
-		if [ -e "${project_path}/.workstation/commands/${1}" ]; then
-			cat "${project_path}/.workstation/commands/${1}"
-		fi
+	if [ -e "${DATA_DIR}/project_path" ] && [ -e "$(cat "${DATA_DIR}/project_path")/.workstation/commands/${1}" ]; then
+		cat "$(cat "${DATA_DIR}/project_path")/.workstation/commands/${1}"
+
+	# Global host aliases
+	elif [ -e "${DATA_DIR}/commands/${1}" ]; then
+		cat "${DATA_DIR}/commands/${1}"
 	fi
 }
 

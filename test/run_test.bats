@@ -275,3 +275,18 @@ EOF
 	[ $status -eq 0 ]
 	echo "$output" | grep -q "OK"
 }
+
+@test "PROJECT_PATH aliases override WORKSTATION_HOME aliases" {
+	mkdir -p "${WORKSTATION_HOME}/commands"
+	echo "echo 'workstation-alias'" > "${WORKSTATION_HOME}/commands/test"
+
+	mkdir -p "${WORKSTATION_PROJECT_PATH}/.workstation/commands"
+	echo "echo 'project-alias'" > "${WORKSTATION_PROJECT_PATH}/.workstation/commands/test"
+
+	mkdir -p "${WORKSTATION_PROJECT_PATH}/foo"
+	cd "${WORKSTATION_PROJECT_PATH}/foo"
+
+	run workstation test
+	[ $status -eq 0 ]
+	echo "$output" | grep -q "project-alias"
+}
