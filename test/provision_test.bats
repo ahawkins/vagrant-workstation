@@ -41,7 +41,7 @@ EOF
 EOF
 	chmod +x "${scratch}/vagrant"
 
-	pushd "$(mktemp -d -t junk)" > /dev/null
+	pushd "$(mktemp -d -t workstation)" > /dev/null
 	run env PATH="${scratch}:$PATH" workstation provision
 	popd > /dev/null
 

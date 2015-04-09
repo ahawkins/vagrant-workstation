@@ -1,5 +1,5 @@
 @test "up changes to correct directory for vagrant provisioning" {
-	scratch_home="$(mktemp -d -t data)"
+	scratch_home="$(mktemp -d -t workstation)"
 
 	scratch="$(mktemp -d -t workstation)"
 	cat > "${scratch}/vagrant" <<'EOF'
@@ -18,7 +18,7 @@
 EOF
 	chmod +x "${scratch}/vagrant"
 
-	pushd "$(mkdtemp -d -t junk)"
+	pushd "$(mkdtemp -d -t workstation)"
 	run env PATH="${scratch}:$PATH" WORKSTATION_HOME="$scratch_home" workstation up "$scratch"
 	popd
 

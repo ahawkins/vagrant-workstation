@@ -79,7 +79,7 @@ EOF
 }
 
 @test "reload executes in the vagrantfile directory" {
-	scratch="$(mktemp -d -t bats.XXXX)"
+	scratch="$(mktemp -d -t workstation)"
 	echo "$scratch"
 	cat > "${scratch}/vagrant" <<'EOF'
 	#!/usr/bin/env bash
@@ -88,7 +88,7 @@ EOF
 	chmod +x "${scratch}/vagrant"
 	echo "/foo/bar" > "${scratch}/project_path"
 
-	cd "$(mktemp -d -t bats.XXXX)"
+	cd "$(mktemp -d -t workstation)"
 	run env PATH="${scratch}:$PATH" WORKSTATION_HOME="$scratch" workstation reload
 	[ $status -eq 0 ]
 	echo "$output" | grep -q "$(dirname "${WORKSTATION_VAGRANTFILE}")-pwd"
