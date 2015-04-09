@@ -270,6 +270,7 @@ EOF
 	cd "${WORKSTATION_PROJECT_PATH}/foo"
 
 	run workstation test -p bar -- foo --bar
+	echo "$output"
 	[ $status -eq 0 ]
 	echo "$output" | grep -q "OK"
 }
