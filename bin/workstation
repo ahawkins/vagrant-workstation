@@ -168,7 +168,7 @@ case "$subcommand" in
 
 		export VAGRANT_CWD="$(dirname "$VAGRANTFILE")"
 
-		vagrant $@
+		vagrant "$@"
 
 		rm -rf "${DATA_DIR}/ssh_config"
 		rm -rf "${DATA_DIR}/project_path"
@@ -182,7 +182,7 @@ case "$subcommand" in
 
 		export VAGRANT_CWD="$(dirname "$VAGRANTFILE")"
 
-		exec vagrant $@
+		exec vagrant "$@"
 
 		;;
 
