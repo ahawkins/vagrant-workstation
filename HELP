@@ -5,7 +5,7 @@ enumerated below.
 
 		Boot the workstation for PROJECT_PATH
 
-	run COMMAND [-p PROJECT]
+	run COMMAND [-p PROJECT] [-- COMMAND_ARGUMENTS]
 	
 		Run command in matching project directory. Run executes the command
 		in the matching project directory. This either determined by the
@@ -44,7 +44,7 @@ enumerated below.
 
 		Executes `vagrant ssh-config` with OPTIONS.
 
-	CUSTOM
+	CUSTOM [-p PROJECT] [-- COMMAND_ARGUMENTS]
 
 		CUSTOM may also be a custom command. Define a custom command by
 		creating a file in $WORKSTATION_HOME/.commands/COMMAND or

@@ -93,9 +93,9 @@ case "$subcommand" in
 		while getopts ":p:" opt; do
 			case $opt in
 				p)
-					matches=$(find "$project_path" -type d -maxdepth 1 -name "*$OPTARG*")
+					matches=$(find "$project_path" -type d -maxdepth 1 -name "*${OPTARG}*")
 
-					if [ $(echo "$matches" | wc -l) -eq 1 ]; then
+					if [ -n "$matches" ] && [ $(echo "$matches" | wc -l) -eq 1 ]; then
 						project="$(basename "$matches")"
 					else
 						echo "${OPTARG} matched too many projects:" 2>&1
@@ -118,7 +118,7 @@ case "$subcommand" in
 		fi
 
 		if [ -z "$project" ]; then
-			cwd=$PWD
+			cwd="$PWD"
 			while [ "$(dirname $cwd)" != "$project_path" ] && [ "$cwd" != / ]; do
 				cwd="$(dirname "$cwd")"
 			done
@@ -216,7 +216,7 @@ case "$subcommand" in
 			while getopts ":p:" opt; do
 				case $opt in
 					p)
-						project="-p ${OPTARG}"
+						project="${OPTARG}"
 						;;
 					\?)
 						echo "Invalid option: -$OPTARG" 1>&2
@@ -227,7 +227,11 @@ case "$subcommand" in
 
 			shift $((OPTIND-1))
 
-			exec $0 run "$project" "$command_alias" "$@"
+			if [ -n "$project" ] ; then
+				exec $0 run -p "$project" "$command_alias" "$@"
+			else
+				exec $0 run "$command_alias" "$@"
+			fi
 		else
 			usage
 			exit 1

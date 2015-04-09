@@ -17,7 +17,7 @@ teardown() {
 	set +u
 }
 
-@test "fails if no command given" {
+@test "run fails if no command given" {
 	mkdir -p "${WORKSTATION_PROJECT_PATH}/foo"
 	cat > "${WORKSTATION_PROJECT_PATH}/foo/cmd" <<EOF
 	#!/usr/bin/env bash
@@ -95,12 +95,16 @@ EOF
 
 	# Test fuzzy match start of project
 	run workstation run -p f -- ./cmd
-	echo "$output"
 	[ $status -eq 0 ]
 	echo "$output" | grep -q foo-project
 
 	# Test fuzzy match end of project
 	run workstation run -p oo -- ./cmd
+	[ $status -eq 0 ]
+	echo "$output" | grep -q foo-project
+
+	# Test fuzzy match also accepts complete name
+	run workstation run -p foo -- ./cmd
 	[ $status -eq 0 ]
 	echo "$output" | grep -q foo-project
 
@@ -167,7 +171,7 @@ EOF
 	mkdir -p "${WORKSTATION_PROJECT_PATH}/foo"
 	cd "${WORKSTATION_PROJECT_PATH}/foo"
 
-	run workstation run shopt -q login_shell
+	run workstation run -- shopt -q login_shell
 
 	[ $status -eq 0 ]
 }
@@ -195,7 +199,7 @@ EOF
 	mkdir -p "${WORKSTATION_PROJECT_PATH}/foo"
 	cd "${WORKSTATION_PROJECT_PATH}/foo"
 
-	run workstation test foo --bar
+	run workstation test -- foo --bar
 	[ $status -eq 0 ]
 	echo "$output" | grep -q "OK"
 }
@@ -231,7 +235,7 @@ EOF
 	cat > "${WORKSTATION_PROJECT_PATH}/test-command" <<'EOF'
 	#!/usr/bin/env bash
 	set -eou pipefail
-	if [ "${PWD}" = "/projects/foo" ] && [ "$*" = "foo --bar" ]; then
+	if [ "${PWD}" = "/projects/foo" ] && [ "$*" = "bar --baz" ]; then
 		echo "OK"
 		exit 0
 	else
@@ -242,9 +246,8 @@ EOF
 
 	mkdir -p "${WORKSTATION_PROJECT_PATH}/foo"
 	mkdir -p "${WORKSTATION_PROJECT_PATH}/bar"
-	cd "${WORKSTATION_PROJECT_PATH}/foo"
 
-	run workstation test -p bar -- foo --bar
+	run workstation test -p foo -- bar --baz
 	[ $status -eq 0 ]
 	echo "$output" | grep -q "OK"
 }
@@ -256,7 +259,7 @@ EOF
 	cat > "${WORKSTATION_PROJECT_PATH}/test-command" <<'EOF'
 	#!/usr/bin/env bash
 	set -eou pipefail
-	if [ "${PWD}" = "/projects/foo" ] && [ "$*" = "foo --bar" ]; then
+	if [ "${PWD}" = "/projects/foo" ] && [ "$*" = "bar --baz" ]; then
 		echo "OK"
 		exit 0
 	else
@@ -267,10 +270,8 @@ EOF
 
 	mkdir -p "${WORKSTATION_PROJECT_PATH}/foo"
 	mkdir -p "${WORKSTATION_PROJECT_PATH}/bar"
-	cd "${WORKSTATION_PROJECT_PATH}/foo"
 
-	run workstation test -p bar -- foo --bar
-	echo "$output"
+	run workstation test -p foo -- bar --baz
 	[ $status -eq 0 ]
 	echo "$output" | grep -q "OK"
 }
