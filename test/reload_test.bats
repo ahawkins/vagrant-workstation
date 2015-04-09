@@ -77,3 +77,19 @@ EOF
 	[ $status -eq 0 ]
 	[ "$(cat "${scratch}/ssh_config")" = "fake-ssh-config" ]
 }
+
+@test "reload executes in the vagrantfile directory" {
+	scratch="$(mktemp -d -t bats.XXXX)"
+	echo "$scratch"
+	cat > "${scratch}/vagrant" <<'EOF'
+	#!/usr/bin/env bash
+	echo "${PWD}-pwd"
+EOF
+	chmod +x "${scratch}/vagrant"
+	echo "/foo/bar" > "${scratch}/project_path"
+
+	cd "$(mktemp -d -t bats.XXXX)"
+	run env PATH="${scratch}:$PATH" WORKSTATION_HOME="$scratch" workstation reload
+	[ $status -eq 0 ]
+	echo "$output" | grep -q "$(dirname "${WORKSTATION_VAGRANTFILE}")-pwd"
+}
