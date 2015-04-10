@@ -290,3 +290,32 @@ EOF
 	[ $status -eq 0 ]
 	echo "$output" | grep -q "project-alias"
 }
+
+@test "PROJECT_PATH aliases may be symlinked" {
+	scratch="$(mktemp -d -t workstation)"
+	echo "echo 'symlink-alias'" > "${scratch}/test"
+
+	mkdir -p "${WORKSTATION_PROJECT_PATH}/.workstation"
+	ln -s "$scratch" "${WORKSTATION_PROJECT_PATH}/.workstation/commands"
+
+	mkdir -p "${WORKSTATION_PROJECT_PATH}/foo"
+	cd "${WORKSTATION_PROJECT_PATH}/foo"
+
+	run workstation test
+	[ $status -eq 0 ]
+	echo "$output" | grep -q "symlink-alias"
+}
+
+@test "WORKSTATION_HOME aliases may be symlinked" {
+	scratch="$(mktemp -d -t workstation)"
+	echo "echo 'symlink-alias'" > "${scratch}/test"
+
+	ln -s "$scratch" "${WORKSTATION_HOME}/commands"
+
+	mkdir -p "${WORKSTATION_PROJECT_PATH}/foo"
+	cd "${WORKSTATION_PROJECT_PATH}/foo"
+
+	run workstation test
+	[ $status -eq 0 ]
+	echo "$output" | grep -q "symlink-alias"
+}
