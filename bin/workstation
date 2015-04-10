@@ -160,6 +160,15 @@ case "$subcommand" in
 		popd > /dev/null
 
 		;;
+	edit)
+		if [ -z "$VAGRANTFILE" ] || [ ! -f "$VAGRANTFILE" ]; then
+			echo "No VAGRANTFILE found at WORKSTATION_VAGRANTFILE" 1>&2;
+			exit 1
+		fi
+
+		${EDITOR} "$VAGRANTFILE"
+
+		;;
 	destroy)
 		if [ -z "$VAGRANTFILE" ] || [ ! -f "$VAGRANTFILE" ]; then
 			echo "No VAGRANTFILE found at WORKSTATION_VAGRANTFILE" 1>&2;

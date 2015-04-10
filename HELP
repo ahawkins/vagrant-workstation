@@ -1,6 +1,10 @@
 <command> is either a workstation or vagrant command. All options are
 enumerated below.
 
+	edit
+
+		Open WORKSTATION_VAGRANTFILE in EDITOR
+
 	up PROJECT_PATH [OPTIONS]
 
 		Boot the workstation for PROJECT_PATH
