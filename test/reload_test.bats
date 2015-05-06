@@ -93,3 +93,19 @@ EOF
 	[ $status -eq 0 ]
 	echo "$output" | grep -q "$(dirname "${WORKSTATION_VAGRANTFILE}")-pwd"
 }
+
+@test "reload receives any extra arguments" {
+	scratch="$(mktemp -d -t workstation)"
+	echo "$scratch"
+	cat > "${scratch}/vagrant" <<'EOF'
+	#!/usr/bin/env bash
+	echo "$@"
+EOF
+	chmod +x "${scratch}/vagrant"
+	echo "/foo/bar" > "${scratch}/project_path"
+
+	cd "$(mktemp -d -t workstation)"
+	run env PATH="${scratch}:$PATH" WORKSTATION_HOME="$scratch" workstation reload foo --bar
+	[ $status -eq 0 ]
+	echo "$output" | grep -q "foo --bar"
+}

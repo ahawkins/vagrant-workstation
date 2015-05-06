@@ -150,11 +150,13 @@ case "$subcommand" in
 			exit 1
 		fi
 
+		shift
+
 		export WORKSTATION_PROJECT_PATH="$(cat "${DATA_DIR}/project_path")"
 
 		pushd "$(dirname "$VAGRANTFILE")" > /dev/null
 
-		vagrant reload
+		vagrant reload "$@"
 		vagrant ssh-config > "${DATA_DIR}/ssh_config"
 
 		popd > /dev/null
