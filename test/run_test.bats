@@ -114,6 +114,29 @@ EOF
 	echo "$output" | grep -q bar-project
 }
 
+@test "run -p prefers an exact match" {
+	mkdir -p "${WORKSTATION_PROJECT_PATH}/foo"
+	cat > "${WORKSTATION_PROJECT_PATH}/foo/cmd" <<EOF
+	#!/usr/bin/env bash
+	set -eou pipefail
+	echo foo-project
+EOF
+	chmod +x "${WORKSTATION_PROJECT_PATH}/foo/cmd"
+
+	mkdir -p "${WORKSTATION_PROJECT_PATH}/foo-bar"
+	cat > "${WORKSTATION_PROJECT_PATH}/foo-bar/cmd" <<EOF
+	#!/usr/bin/env bash
+	set -eou pipefail
+	echo foo-bar-project
+EOF
+	chmod +x "${WORKSTATION_PROJECT_PATH}/foo-bar/cmd"
+
+	# Test hits the exact match
+	run workstation run -p foo -- ./cmd
+	[ $status -eq 0 ]
+	echo "$output" | grep -q foo-project
+}
+
 @test "run -p fails if multiple fuzzy matches" {
 	mkdir -p "${WORKSTATION_PROJECT_PATH}/foo-bar"
 	cat > "${WORKSTATION_PROJECT_PATH}/foo-bar/cmd" <<EOF

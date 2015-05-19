@@ -90,14 +90,18 @@ case "$subcommand" in
 		while getopts ":p:" opt; do
 			case $opt in
 				p)
-					matches=$(find "$project_path" -type d -maxdepth 1 -name "*${OPTARG}*")
-
-					if [ -n "$matches" ] && [ $(echo "$matches" | wc -l) -eq 1 ]; then
-						project="$(basename "$matches")"
+					if [ -d "${project_path}/${OPTARG}" ]; then
+						project="${OPTARG}"
 					else
-						echo "${OPTARG} matched too many projects:" 2>&1
-						echo "$matches" 2>&1
-						exit 1
+						matches=$(find "$project_path" -type d -maxdepth 1 -name "*${OPTARG}*")
+
+						if [ -n "$matches" ] && [ $(echo "$matches" | wc -l) -eq 1 ]; then
+							project="$(basename "$matches")"
+						else
+							echo "${OPTARG} matched too many projects:" 2>&1
+							echo "$matches" 2>&1
+							exit 1
+						fi
 					fi
 					;;
 				\?)
