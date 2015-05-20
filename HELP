@@ -20,6 +20,11 @@ enumerated below.
 		execution in the appropriate project inside PROJECT_PATH on the host
 		system.
 
+	provision [OPITONS]
+
+		Executes `vagrant provision` with OPTIONS and other appropriate
+		settings.
+
 	reload
 
 		Restart Vagrant
