@@ -1,84 +1,57 @@
-<command> is either a workstation or vagrant command. All options are
-enumerated below.
+WORKSTATION COMMANDS
 
-	edit
+These commands replace or modify the appropriate vagrant command.
 
-		Open WORKSTATION_VAGRANTFILE in EDITOR
+	up -n NAME -v VAGRANTFILE -p PROJECT_PATH [-- VAGRANT_OPTIONS]
 
-	up PROJECT_PATH [OPTIONS]
+		Boot the workstation for PROJECT_PATH with a specific using
+		the VAGRANTFILE. VAGRANTFILE must be an absolute path.
+		VAGRANT_OPTIONS are forwarded to `vagrant up`.
 
-		Boot the workstation for PROJECT_PATH
-
-	run COMMAND [-p PROJECT] [-- COMMAND_ARGUMENTS]
+	run COMMAND [COMMAND_OPIONS]
 	
 		Run command in matching project directory. Run executes the command
-		in the matching project directory. This either determined by the
-		current working directory or by the -p option. The PROJECT option
-		may be given as a partial match. For consider PROJECT_PATH includes
-		directories /foo-bar and /foo-baz. Set -p to "baz" and the command
-		will be executed inside /foo-baz. This option allows command
-		execution in the appropriate project inside PROJECT_PATH on the host
-		system.
+		in the matching project directory.
 
-	provision [OPITONS]
-
-		Executes `vagrant provision` with OPTIONS and other appropriate
-		settings.
-
-	reload
-
-		Restart Vagrant
-
-	destroy [OPTIONS]
-
-		Executes `vagrant destroy` with OPTIONS.
-
-	halt [OPTIONS]
-
-		Executes `vagrant halt` with OPTIONS.
-
-	suspend [OPTIONS]
-
-		Executes `vagrant suspend` with OPTIONS.
-
-	status [OPTIONS]
-
-		Executes `vagrant status` with OPTIONS.
-
-	ssh [OPTIONS]
-
-		Executes `vagrant ssh` with OPTIONS.
-
-	ssh-config [OPTIONS]
-
-		Executes `vagrant ssh-config` with OPTIONS.
-
-	CUSTOM [-p PROJECT] [-- COMMAND_ARGUMENTS]
+	CUSTOM [COMMAND_OPTIONS]
 
 		CUSTOM may also be a custom command. Define a custom command by
-		creating a file in $WORKSTATION_HOME/.commands/COMMAND or
-		PROJECT_ROOT/.commands/COMMAND. (See configuration section below).
-		The content of the file is then passed to run.
+		creating a file in $PROJECT_PATH/.workstation/commands/COMMAND
+		(See configuration section below). The content of the file is
+		then passed to run. Assume PROJECT_PATH is the value used for
+		`workstation up -p PROJECT_PATH`.
 
 		Here's an example.
 		
-			$ echo "make test" > $WORKSTATION_HOME/.commands/test
+			$ echo "make test" > $PROJECT_PATH/.workstation/commands/test
 			$ workstation test
 
 		This is equivalent to running `workstation run make test` without
 		having to type it everytime.
 
+FORWARDED COMMANDS
+
+The following subcommands are forwarded directly to `vagrant`. They are
+invoked just like normal `vagrant` command just with the appropriate
+virtual machine selected and exported environment variables.
+Usage: worktation SUBCOMMAND [OPTIONS]
+
+	reload
+	destroy
+	halt
+	provision
+	status
+	snapshot
+	suspend
+	ssh
 
 CONFIGURATION
 
-This command also requires the $WORKSTATION_VAGRANTFILE environment
-variable. The variable must be the path to a Vagrantfile. The
-Vagrantfile is used for all interaction with the VM.
+The WORKSTATION_HOME environment variable sets the directory to write
+artifact files. Defaults to ~/.workstation.
 
-This command also creates filesystem artifacts for tracking the
-appropriate vagrant VM. These are kept in "$HOME/.workstation" by
-default. This can be overridden by setting $WORKSTATION_HOME. This
-directory also stores files for custom commands.
+Set the WORKSTATION_NAME environment variable to avoid file system
+based workstation lookups. Primarily useful in scripting.
 
 See https://github.com/ahawkins/vagrant-workstation for more
 information.
