@@ -13,7 +13,9 @@ version() {
 usage() {
 	version
 	echo
-	echo "Usage: workstation <command> [OPTIONS]"
+	echo "Usage: ${0} <command> [OPTIONS]"
+	echo
+	echo "Run ${0} --help for full details"
 }
 
 help() {
