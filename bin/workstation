@@ -4,7 +4,7 @@ set -eou pipefail
 
 declare -r WORKSTATION_ROOT=$(cd "$(dirname $0)/.."; pwd)
 
-declare -r DATA_DIR="${WORKSTATION_HOME:-${HOME}/.workstation}"
+declare -r DATA_DIR="${XDG_DATA_HOME:-${HOME}/.local/share}/workstation"
 
 version() {
 	echo "Workstation $(cat "${WORKSTATION_ROOT}/VERSION")"

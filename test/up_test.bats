@@ -1,5 +1,16 @@
 #!/usr/bin/env bats
 
+setup() {
+	[ -n "${XDG_DATA_HOME}" ]
+
+	data_dir="${XDG_DATA_HOME}/workstation"
+	rm -rf "${data_dir}"
+
+	scratch="$(mktemp -d)"
+	project_path="$(mktemp -d)"
+	vagrant_file="$(mktemp)"
+}
+
 @test "up requires -v" {
 	run workstation up -n "test" -p "$(mktemp -d)"
 	[ $status -ne 0 ]
@@ -26,11 +37,6 @@
 }
 
 @test "up wraps vagrant up & vagrant ssh-config" {
-	scratch="$(mktemp -d)"
-	project_path="$(mktemp -d)"
-	vagrant_file="$(mktemp)"
-	workstation_home="$(mktemp -d)"
-
 	cat > "${scratch}/vagrant" <<'EOF'
 	#!/usr/bin/env bash
 	set -eou pipefail
@@ -49,7 +55,6 @@ EOF
 
 	run env \
 		"PATH=${scratch}:${PATH}" \
-		"WORKSTATION_HOME=${workstation_home}" \
 		workstation up \
 		-n "dummy" \
 		-v "${vagrant_file}" \
@@ -62,9 +67,9 @@ EOF
 	echo "${output}" | fgrep -q "WORKSTATION_PROJECT_PATH=${project_path}"
 	echo "${output}" | fgrep -q "args=up -foo bar"
 
-	fgrep -q "VAGRANT_CWD=$(dirname "${vagrant_file}")" "${workstation_home}/dummy/ssh_config"
-	fgrep -q "WORKSTATION_PROJECT_PATH=${project_path}" "${workstation_home}/dummy/ssh_config"
-	fgrep -q "fake-ssh-config" "${workstation_home}/dummy/ssh_config"
+	fgrep -q "VAGRANT_CWD=$(dirname "${vagrant_file}")" "${data_dir}/dummy/ssh_config"
+	fgrep -q "WORKSTATION_PROJECT_PATH=${project_path}" "${data_dir}/dummy/ssh_config"
+	fgrep -q "fake-ssh-config" "${data_dir}/dummy/ssh_config"
 
 	[ "$(cat "${project_path}/.workstation/name")" = "dummy" ]
 	[ -d "${project_path}/.workstation/commands" ]

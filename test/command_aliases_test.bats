@@ -1,10 +1,14 @@
 #!/usr/bin/env bats
 
 setup() {
+	[ -n "${XDG_DATA_HOME}" ]
+
+	data_dir="${XDG_DATA_HOME}/workstation"
+	rm -rf "${data_dir}"
+
 	scratch="$(mktemp -d)"
 	project_path="$(mktemp -d)"
 	vagrant_file="$(mktemp)"
-	workstation_home="$(mktemp -d)"
 
 	command_path="${project_path}/.workstation/commands"
 
@@ -26,13 +30,12 @@ EOF
 
 	pushd "$(mktemp -d)" > /dev/null
 
-	mkdir -p "${workstation_home}/dummy"
-	echo "${project_path}" > "${workstation_home}/dummy/project_path"
-	echo "${vagrant_file}" > "${workstation_home}/dummy/vagrant_file"
+	mkdir -p "${data_dir}/dummy"
+	echo "${project_path}" > "${data_dir}/dummy/project_path"
+	echo "${vagrant_file}" > "${data_dir}/dummy/vagrant_file"
 
 	run env \
 		"PATH=${scratch}:${PATH}" \
-		"WORKSTATION_HOME=${workstation_home}" \
 		workstation placholder
 
 	[ $status -eq 1 ]
@@ -52,13 +55,12 @@ EOF
 	echo "junk" > "${project_path}/.workstation/name"
 	pushd "${project_path}/foo" > /dev/null
 
-	mkdir -p "${workstation_home}/dummy"
-	echo "${project_path}" > "${workstation_home}/dummy/project_path"
-	echo "${vagrant_file}" > "${workstation_home}/dummy/vagrant_file"
+	mkdir -p "${data_dir}/dummy"
+	echo "${project_path}" > "${data_dir}/dummy/project_path"
+	echo "${vagrant_file}" > "${data_dir}/dummy/vagrant_file"
 
 	run env \
 		"PATH=${scratch}:${PATH}" \
-		"WORKSTATION_HOME=${workstation_home}" \
 		"WORKSTATION_NAME=dummy" \
 		workstation placeholder
 
@@ -74,11 +76,10 @@ EOF
 EOF
 	chmod +x "${scratch}/ssh"
 
-	[ ! -d "${workstation_home}/dummy" ]
+	[ ! -d "${data_dir}/dummy" ]
 
 	run env \
 		"PATH=${scratch}:${PATH}" \
-		"WORKSTATION_HOME=${workstation_home}" \
 		"WORKSTATION_NAME=dummy" \
 		workstation placeholder
 
@@ -101,15 +102,14 @@ EOF
 	mkdir -p "${project_path}/.workstation"
 	echo "dummy" > "${project_path}/.workstation/name"
 
-	mkdir -p "${workstation_home}/dummy"
-	echo "${project_path}" > "${workstation_home}/dummy/project_path"
-	echo "${vagrant_file}" > "${workstation_home}/dummy/vagrant_file"
+	mkdir -p "${data_dir}/dummy"
+	echo "${project_path}" > "${data_dir}/dummy/project_path"
+	echo "${vagrant_file}" > "${data_dir}/dummy/vagrant_file"
 
 	pushd "${project_path}/foo" > /dev/null
 
 	run env \
 		"PATH=${scratch}:${PATH}" \
-		"WORKSTATION_HOME=${workstation_home}" \
 		workstation placeholder
 
 	[ $status -eq 5 ]
@@ -129,20 +129,19 @@ EOF
 	mkdir -p "${project_path}/.workstation"
 	echo "dummy" > "${project_path}/.workstation/name"
 
-	mkdir -p "${workstation_home}/dummy"
-	echo "${project_path}" > "${workstation_home}/dummy/project_path"
-	echo "${vagrant_file}" > "${workstation_home}/dummy/vagrant_file"
+	mkdir -p "${data_dir}/dummy"
+	echo "${project_path}" > "${data_dir}/dummy/project_path"
+	echo "${vagrant_file}" > "${data_dir}/dummy/vagrant_file"
 
 	pushd "${project_path}/foo" > /dev/null
 
 	run env \
 		"PATH=${scratch}:${PATH}" \
-		"WORKSTATION_HOME=${workstation_home}" \
 		workstation placeholder -foo bar
 
 	[ $status -eq 0 ]
 	echo "${output}" | fgrep -q "cd '/projects/foo' && bash -l -c 'placeholder -foo bar'"
-	echo "${output}" | fgrep -q -- "-F ${workstation_home}/dummy/ssh_config"
+	echo "${output}" | fgrep -q -- "-F ${data_dir}/dummy/ssh_config"
 }
 
 @test "prints usage if alias does not exist" {
@@ -157,15 +156,14 @@ EOF
 	mkdir -p "${project_path}/.workstation"
 	echo "dummy" > "${project_path}/.workstation/name"
 
-	mkdir -p "${workstation_home}/dummy"
-	echo "${project_path}" > "${workstation_home}/dummy/project_path"
-	echo "${vagrant_file}" > "${workstation_home}/dummy/vagrant_file"
+	mkdir -p "${data_dir}/dummy"
+	echo "${project_path}" > "${data_dir}/dummy/project_path"
+	echo "${vagrant_file}" > "${data_dir}/dummy/vagrant_file"
 
 	pushd "${project_path}/foo" > /dev/null
 
 	run env \
 		"PATH=${scratch}:${PATH}" \
-		"WORKSTATION_HOME=${workstation_home}" \
 		workstation junk
 
 	[ $status -eq 1 ]

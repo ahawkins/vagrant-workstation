@@ -1,10 +1,14 @@
 #!/usr/bin/env bats
 
 setup() {
+	[ -n "${XDG_DATA_HOME}" ]
+
+	data_dir="${XDG_DATA_HOME}/workstation"
+	rm -rf "${data_dir}"
+
 	scratch="$(mktemp -d)"
 	project_path="$(mktemp -d)"
 	vagrant_file="$(mktemp)"
-	workstation_home="$(mktemp -d)"
 }
 
 @test "command reads name from file system" {
@@ -23,13 +27,12 @@ EOF
 	pushd "${project_path}/foo/bar/baz" > /dev/null
 
 	for wrapped_command in "${WRAPPED_COMMANDS[@]}"; do
-		mkdir -p "${workstation_home}/dummy"
-		echo "${project_path}" > "${workstation_home}/dummy/project_path"
-		echo "${vagrant_file}" > "${workstation_home}/dummy/vagrant_file"
+		mkdir -p "${data_dir}/dummy"
+		echo "${project_path}" > "${data_dir}/dummy/project_path"
+		echo "${vagrant_file}" > "${data_dir}/dummy/vagrant_file"
 
 		run env \
 			"PATH=${scratch}:${PATH}" \
-			"WORKSTATION_HOME=${workstation_home}" \
 			workstation "${wrapped_command}"
 
 		[ $status -eq 0 ]
@@ -54,13 +57,12 @@ EOF
 	pushd "$(mktemp -d)" > /dev/null
 
 	for wrapped_command in "${WRAPPED_COMMANDS[@]}"; do
-		mkdir -p "${workstation_home}/dummy"
-		echo "${project_path}" > "${workstation_home}/dummy/project_path"
-		echo "${vagrant_file}" > "${workstation_home}/dummy/vagrant_file"
+		mkdir -p "${data_dir}/dummy"
+		echo "${project_path}" > "${data_dir}/dummy/project_path"
+		echo "${vagrant_file}" > "${data_dir}/dummy/vagrant_file"
 
 		run env \
 			"PATH=${scratch}:${PATH}" \
-			"WORKSTATION_HOME=${workstation_home}" \
 			workstation "${wrapped_command}"
 
 		[ $status -eq 3 ]
@@ -83,13 +85,12 @@ EOF
 	pushd "${project_path}/foo/bar/baz" > /dev/null
 
 	for wrapped_command in "${WRAPPED_COMMANDS[@]}"; do
-		mkdir -p "${workstation_home}/dummy"
-		echo "${project_path}" > "${workstation_home}/dummy/project_path"
-		echo "${vagrant_file}" > "${workstation_home}/dummy/vagrant_file"
+		mkdir -p "${data_dir}/dummy"
+		echo "${project_path}" > "${data_dir}/dummy/project_path"
+		echo "${vagrant_file}" > "${data_dir}/dummy/vagrant_file"
 
 		run env \
 			"PATH=${scratch}:${PATH}" \
-			"WORKSTATION_HOME=${workstation_home}" \
 			"WORKSTATION_NAME=dummy" \
 			workstation "${wrapped_command}"
 
@@ -109,11 +110,10 @@ EOF
 	chmod +x "${scratch}/vagrant"
 
 	for wrapped_command in "${WRAPPED_COMMANDS[@]}"; do
-		[ ! -d "${workstation_home}/dummy" ]
+		[ ! -d "${data_dir}/dummy" ]
 
 		run env \
 			"PATH=${scratch}:${PATH}" \
-			"WORKSTATION_HOME=${workstation_home}" \
 			"WORKSTATION_NAME=dummy" \
 			workstation "${wrapped_command}" -foo bar
 
@@ -134,13 +134,12 @@ EOF
 	chmod +x "${scratch}/vagrant"
 
 	for wrapped_command in "${WRAPPED_COMMANDS[@]}"; do
-		mkdir -p "${workstation_home}/dummy"
-		echo "${project_path}" > "${workstation_home}/dummy/project_path"
-		echo "${vagrant_file}" > "${workstation_home}/dummy/vagrant_file"
+		mkdir -p "${data_dir}/dummy"
+		echo "${project_path}" > "${data_dir}/dummy/project_path"
+		echo "${vagrant_file}" > "${data_dir}/dummy/vagrant_file"
 
 		run env \
 			"PATH=${scratch}:${PATH}" \
-			"WORKSTATION_HOME=${workstation_home}" \
 			"WORKSTATION_NAME=dummy" \
 			workstation "${wrapped_command}" -foo bar
 
@@ -152,9 +151,9 @@ EOF
 }
 
 @test "reload regenerates ssh config" {
-	mkdir -p "${workstation_home}/dummy"
-	echo "${project_path}" > "${workstation_home}/dummy/project_path"
-	echo "${vagrant_file}" > "${workstation_home}/dummy/vagrant_file"
+	mkdir -p "${data_dir}/dummy"
+	echo "${project_path}" > "${data_dir}/dummy/project_path"
+	echo "${vagrant_file}" > "${data_dir}/dummy/vagrant_file"
 
 	cat > "${scratch}/vagrant" <<'EOF'
 	#!/usr/bin/env bash
@@ -174,21 +173,20 @@ EOF
 
 	run env \
 		"PATH=${scratch}:${PATH}" \
-		"WORKSTATION_HOME=${workstation_home}" \
 		"WORKSTATION_NAME=dummy" \
 		workstation reload -foo bar
 
 	[ $status -eq 0 ]
 
-	fgrep -q "VAGRANT_CWD=$(dirname "${vagrant_file}")" "${workstation_home}/dummy/ssh_config"
-	fgrep -q "WORKSTATION_PROJECT_PATH=${project_path}" "${workstation_home}/dummy/ssh_config"
-	fgrep -q "fake-ssh-config" "${workstation_home}/dummy/ssh_config"
+	fgrep -q "VAGRANT_CWD=$(dirname "${vagrant_file}")" "${data_dir}/dummy/ssh_config"
+	fgrep -q "WORKSTATION_PROJECT_PATH=${project_path}" "${data_dir}/dummy/ssh_config"
+	fgrep -q "fake-ssh-config" "${data_dir}/dummy/ssh_config"
 }
 
 @test "destroy removes workstation artifcats" {
-	mkdir -p "${workstation_home}/dummy"
-	echo "${project_path}" > "${workstation_home}/dummy/project_path"
-	echo "${vagrant_file}" > "${workstation_home}/dummy/vagrant_file"
+	mkdir -p "${data_dir}/dummy"
+	echo "${project_path}" > "${data_dir}/dummy/project_path"
+	echo "${vagrant_file}" > "${data_dir}/dummy/vagrant_file"
 
 	cat > "${scratch}/vagrant" <<'EOF'
 	#!/usr/bin/env bash
@@ -201,10 +199,10 @@ EOF
 
 	run env \
 		"PATH=${scratch}:${PATH}" \
-		"WORKSTATION_HOME=${workstation_home}" \
 		"WORKSTATION_NAME=dummy" \
 		workstation destroy -foo bar
 
+	echo "${output}"
 	[ $status -eq 0 ]
-	[ ! -d "${workstation_home}/dummy" ]
+	[ ! -d "${data_dir}/dummy" ]
 }

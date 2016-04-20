@@ -1,10 +1,14 @@
 #!/usr/bin/env bats
 
 setup() {
+	[ -n "${XDG_DATA_HOME}" ]
+
+	data_dir="${XDG_DATA_HOME}/workstation"
+	rm -rf "${data_dir}"
+
 	scratch="$(mktemp -d)"
 	project_path="$(mktemp -d)"
 	vagrant_file="$(mktemp)"
-	workstation_home="$(mktemp -d)"
 }
 
 @test "command fails if cannot determine name from file system" {
@@ -14,13 +18,12 @@ setup() {
 
 	pushd "$(mktemp -d)" > /dev/null
 
-	mkdir -p "${workstation_home}/dummy"
-	echo "${project_path}" > "${workstation_home}/dummy/project_path"
-	echo "${vagrant_file}" > "${workstation_home}/dummy/vagrant_file"
+	mkdir -p "${data_dir}/dummy"
+	echo "${project_path}" > "${data_dir}/dummy/project_path"
+	echo "${vagrant_file}" > "${data_dir}/dummy/vagrant_file"
 
 	run env \
 		"PATH=${scratch}:${PATH}" \
-		"WORKSTATION_HOME=${workstation_home}" \
 		workstation run true
 
 	[ $status -eq 3 ]
@@ -34,11 +37,10 @@ setup() {
 EOF
 	chmod +x "${scratch}/vagrant"
 
-	[ ! -d "${workstation_home}/dummy" ]
+	[ ! -d "${data_dir}/dummy" ]
 
 	run env \
 		"PATH=${scratch}:${PATH}" \
-		"WORKSTATION_HOME=${workstation_home}" \
 		"WORKSTATION_NAME=dummy" \
 		workstation run true
 
@@ -62,15 +64,14 @@ EOF
 	mkdir -p "${project_path}/.workstation"
 	echo "dummy" > "${project_path}/.workstation/name"
 
-	mkdir -p "${workstation_home}/dummy"
-	echo "${project_path}" > "${workstation_home}/dummy/project_path"
-	echo "${vagrant_file}" > "${workstation_home}/dummy/vagrant_file"
+	mkdir -p "${data_dir}/dummy"
+	echo "${project_path}" > "${data_dir}/dummy/project_path"
+	echo "${vagrant_file}" > "${data_dir}/dummy/vagrant_file"
 
 	pushd "${project_path}/foo/bar/baz" > /dev/null
 
 	run env \
 		"PATH=${scratch}:${PATH}" \
-		"WORKSTATION_HOME=${workstation_home}" \
 		workstation run true
 
 	[ $status -eq 5 ]
@@ -90,15 +91,14 @@ EOF
 	mkdir -p "${project_path}/.workstation"
 	echo "dummy" > "${project_path}/.workstation/name"
 
-	mkdir -p "${workstation_home}/dummy"
-	echo "${project_path}" > "${workstation_home}/dummy/project_path"
-	echo "${vagrant_file}" > "${workstation_home}/dummy/vagrant_file"
+	mkdir -p "${data_dir}/dummy"
+	echo "${project_path}" > "${data_dir}/dummy/project_path"
+	echo "${vagrant_file}" > "${data_dir}/dummy/vagrant_file"
 
 	pushd "$(mktemp -d)" > /dev/null
 
 	run env \
 		"PATH=${scratch}:${PATH}" \
-		"WORKSTATION_HOME=${workstation_home}" \
 		"WORKSTATION_NAME=dummy" \
 		workstation run true
 
@@ -118,20 +118,19 @@ EOF
 	mkdir -p "${project_path}/.workstation"
 	echo "dummy" > "${project_path}/.workstation/name"
 
-	mkdir -p "${workstation_home}/dummy"
-	echo "${project_path}" > "${workstation_home}/dummy/project_path"
-	echo "${vagrant_file}" > "${workstation_home}/dummy/vagrant_file"
+	mkdir -p "${data_dir}/dummy"
+	echo "${project_path}" > "${data_dir}/dummy/project_path"
+	echo "${vagrant_file}" > "${data_dir}/dummy/vagrant_file"
 
 	pushd "${project_path}/foo/bar/baz" > /dev/null
 
 	run env \
 		"PATH=${scratch}:${PATH}" \
-		"WORKSTATION_HOME=${workstation_home}" \
 		workstation run true
 
 	[ $status -eq 0 ]
 	echo "${output}" | fgrep -q "cd '/projects/foo' && bash -l -c 'true'"
-	echo "${output}" | fgrep -q -- "-F ${workstation_home}/dummy/ssh_config"
+	echo "${output}" | fgrep -q -- "-F ${data_dir}/dummy/ssh_config"
 }
 
 @test "command WORKSTATION_NAME prefers file system based lookup" {
@@ -147,13 +146,12 @@ EOF
 	echo "junk" > "${project_path}/.workstation/name"
 	pushd "${project_path}/foo/bar/baz" > /dev/null
 
-	mkdir -p "${workstation_home}/dummy"
-	echo "${project_path}" > "${workstation_home}/dummy/project_path"
-	echo "${vagrant_file}" > "${workstation_home}/dummy/vagrant_file"
+	mkdir -p "${data_dir}/dummy"
+	echo "${project_path}" > "${data_dir}/dummy/project_path"
+	echo "${vagrant_file}" > "${data_dir}/dummy/vagrant_file"
 
 	run env \
 		"PATH=${scratch}:${PATH}" \
-		"WORKSTATION_HOME=${workstation_home}" \
 		"WORKSTATION_NAME=dummy" \
 		workstation run true
 

@@ -47,8 +47,8 @@ Usage: worktation SUBCOMMAND [OPTIONS]
 
 CONFIGURATION
 
-The WORKSTATION_HOME environment variable sets the directory to write
-artifact files. Defaults to ~/.workstation.
+The XDG_DATA_HOME environment variable sets the directory to write
+artifact files. Defaults to ~/.local/usr/share.
 
 Set the WORKSTATION_NAME environment variable to avoid file system
 based workstation lookups. Primarily useful in scripting.
