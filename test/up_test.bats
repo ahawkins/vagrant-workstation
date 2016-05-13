@@ -74,3 +74,33 @@ EOF
 	[ "$(cat "${project_path}/.workstation/name")" = "dummy" ]
 	[ -d "${project_path}/.workstation/commands" ]
 }
+
+@test "fails if trying to reinit the same vm" {
+	cat > "${scratch}/vagrant" <<'EOF'
+	#!/usr/bin/env bash
+	set -eou pipefail
+	true
+EOF
+	chmod +x "${scratch}/vagrant"
+
+	run env \
+		"PATH=${scratch}:${PATH}" \
+		workstation up \
+		-n "dummy" \
+		-v "${vagrant_file}" \
+		-p "${project_path}"
+
+	[ $status -eq 0 ]
+
+	run env \
+		"PATH=${scratch}:${PATH}" \
+		workstation up \
+		-n "dummy" \
+		-v "${vagrant_file}" \
+		-p "${project_path}"
+
+	[ $status -eq 1 ]
+
+	echo "${output}" | fgrep -q "dummy"
+	echo "${output}" | fgrep -iq "destroy"
+}
