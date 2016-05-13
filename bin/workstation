@@ -19,9 +19,9 @@ version() {
 usage() {
 	version
 	echo
-	echo "Usage: ${0} <command> [OPTIONS]"
+	echo "Usage: "$(basename "${0}")" <command> [OPTIONS]"
 	echo
-	echo "Run ${0} --help for full details"
+	echo "Run "$(basename "${0}")" --help for full details"
 }
 
 help() {
@@ -129,7 +129,7 @@ vagrant_wrapper() {
 
 		vagrant "$@"
 	else
-		echo "${vm_name} not provisioned. Run ${0} up" 1>&2
+		echo "${vm_name} not provisioned. Run $(basename "${0}") up" 1>&2
 		return 1
 	fi
 }
@@ -147,7 +147,7 @@ run_command() {
 	fi
 
 	if [ ! -d "${DATA_DIR}/${vm_name}" ]; then
-		echo "${vm_name} not provisioned. Run ${0} up" 1>&2
+		echo "${vm_name} not provisioned. Run $(basename "${0}") up" 1>&2
 		return 1
 	fi
 
