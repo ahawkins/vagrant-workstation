@@ -5,6 +5,9 @@ WORKSTATION_VAGRANTFILE=$(CURDIR)/test/Vagrantfile
 XDG_DATA_HOME:=$(CURDIR)/tmp/data
 WORKSTATION_PROJECT_PATH:=$(CURDIR)/tmp/scratch
 
+MAN_ENV:=tmp/man_env
+MAN_IMAGE:=ahawkins/vagrant-workstaion
+
 ENV:=env \
 	PATH=$(CURDIR)/bin:$$PATH \
 	XDG_DATA_HOME=$(XDG_DATA_HOME)
@@ -41,6 +44,7 @@ test-smoke: $(VAGRANT) | $(WORKSTATION_PROJECT_PATH)/smoke
 	$(MAKE) clean
 
 .PHONY: clean
-clean: 
+clean:
 	-env VAGRANT_CWD=$(dir $(WORKSTATION_VAGRANTFILE)) vagrant destroy -f 2>&1
 	rm -rf $(VAGRANT) $(XDG_DATA_HOME) $(WORKSTATION_PROJECT_PATH)
+	$(MAKE) -C man clean

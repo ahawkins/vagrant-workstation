@@ -1,0 +1,107 @@
+= workstation(1)
+Adam Hawkins <hi@ahawkins.me>
+:copyright: 2016
+:manmanual: WORKSTATION
+:mansource: WORKSTATION
+:man-linkstyle: blue R <>
+
+== NAME
+
+workstation - Manage Vagrant backed environments quickly from host
+
+== SYNOPSIS
+
+*workstation* [OPTIONS] SUBCOMMAND
+
+== SUBCOMMANDS
+
+_workstation_ works by setting environment variables and delegating the
+heavy lifting to _vagrant_. Thus, most of the commands available through
+_vagrant_ are available through to _workstation_ and execute against the
+appropriate VM.
+
+*up* *-n* _NAME_ *-v* _VAGRANTFILE_ *-p* _PROJECT_PATH_ [-- VAGRANT_OPTIONS]::
+	Boot the workstation for _PROJECT_PATH_ with a specific using
+	the _VAGRANTFILE_. _VAGRANTFILE_ must be an absolute path.
+	_VAGRANT_OPTIONS_ are forwarded to _vagrant up_.
+
+*run* *COMMAND* _[COMMAND_OPTIONS]_::
+	Execute command in matching project directory. This primary use case.
+
+*CUSTOM* _[COMMAND_OPTIONS]_::
+	*CUSTOM* may also be a custom command. Define a custom command by
+	creating a file in _$PROJECT_PATH/.workstation/commands/COMMAND_
+	(See configuration section below). The content of the file is
+	then passed to *run*. Assume _PROJECT_PATH_ is the value used for
+	_workstation up -p PROJECT_PATH_.
+
+== FORWARDED COMMANDS
+
+The following subcommands are forwarded directly to _vagrant_. They are
+invoked like the normal _vagrant_ command just with the appropriate
+virtual machine selected and exported environment variables. Refer to
+the vagrant manual for complete information on these commands.
+
+Usage: *workstation* _SUBCOMMAND_ _[OPTIONS]_
+
+* reload
+* destroy
+* halt
+* provision
+* status
+* snapshot
+* suspend
+* ssh
+
+== ENVIRONMENT VARIABLES
+
+_XDG_DATA_HOME_::
+	Set the base directory to write artifact files to. Defaults to
+	~/.local/usr/share.
+
+_WORKSTATION_NAME_::
+	Set to explicitly avoid file system workstation lookup. Primarily
+	useful in scripting.
+
+== CUSTOM COMMANDS
+
+Users should configure custom commands for commonly executed commands.
+Say you ended up running "workstation run make test" over and over
+again. Create a custom command named _test_ like:
+
+	$ echo "make test" > $PROJECT_PATH/.workstation/commands/test
+	$ workstation test
+
+Custom commands are shared across the whole workstation machine, so they
+can be used on any project. Another recommended use case: opening a
+terminal for the current project.
+
+	$ echo "bash -l" > $PROJECT_PATH/.workstation/commands/shell
+	$ workstation shell
+	
+== EXIT STATUS
+
+*0*::
+  Success
+
+*1*::
+  Failure. Internal or external failure.
+
+*3*::
+  Failure. Cannot determine VM from file system or _WORKSTATION_NAME_
+	not set.
+
+*5*::
+  Failure. SSH config stale. Run "workstation reload" and retry previous
+	command.
+
+== RESOURCES
+
+Source Code::
+	https://github.com/ahawkins/vagrant-workstation
+
+== COPYING
+
+Copyright (c) {copyright} {author}.
+
+Free use of this software is granted under the terms of the MIT License.

@@ -19,9 +19,7 @@ usage() {
 }
 
 help() {
-	usage
-	echo
-	cat "${WORKSTATION_ROOT}/HELP"
+	man "${WORKSTATION_ROOT}/man/dist/workstation.man1"
 }
 
 vagrant_up() {
