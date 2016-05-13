@@ -12,6 +12,12 @@ ENV:=env \
 	PATH=$(CURDIR)/bin:$$PATH \
 	XDG_DATA_HOME=$(XDG_DATA_HOME)
 
+.PHONY: check
+check:
+	vagrant --version
+	bats --version
+	docker --version
+
 $(WORKSTATION_PROJECT_PATH):
 	mkdir -p $@
 
@@ -25,6 +31,7 @@ $(VAGRANT): $(WORKSTATION_PROJECT_PATH)
 
 .PHONY: test
 test:
+	$(MAKE) -C man
 ifdef FILE
 	$(ENV) bats $(FILE)
 else
@@ -42,6 +49,15 @@ test-smoke: $(VAGRANT) | $(WORKSTATION_PROJECT_PATH)/smoke
 	$(SMOKE_TEST_ENV) sh -c 'cd $| && workstation run true'
 	$(SMOKE_TEST_ENV) workstation destroy -f
 	$(MAKE) clean
+
+.PHONY: test-shellcheck
+test-shellcheck:
+	docker run --rm -v $(CURDIR):/data:ro -w /data jrotter/shellcheck \
+		shellcheck -s bash \
+		$(shell find bin -type f -exec test -x {} \; -print | paste -s -d ' ' -)
+
+.PHONY: test-ci
+test-ci: test test-shellcheck test-smoke
 
 .PHONY: clean
 clean:

@@ -2,9 +2,15 @@
 
 set -eou pipefail
 
-declare -r WORKSTATION_ROOT=$(cd "$(dirname $0)/.."; pwd)
+# NOTE: This little dance gets around the shellcheck warning of using
+# declare along with $() since it hides exit codes.
+declare workstation_root
+workstation_root="$(cd "$(dirname "${0}")/.."; pwd)"
 
+declare -r WORKSTATION_ROOT="${workstation_root}"
 declare -r DATA_DIR="${XDG_DATA_HOME:-${HOME}/.local/share}/workstation"
+
+unset workstation_root
 
 version() {
 	echo "Workstation $(cat "${WORKSTATION_ROOT}/VERSION")"
@@ -143,7 +149,7 @@ run_command() {
 	project_path="$(cat "${DATA_DIR}/${vm_name}/project_path")"
 	ssh_config="${DATA_DIR}/${vm_name}/ssh_config"
 
-	while [ "$(dirname ${cwd})" != "${project_path}" ] && [ "${cwd}" != / ]; do
+	while [ "$(dirname "${cwd}")" != "${project_path}" ] && [ "${cwd}" != / ]; do
 		cwd="$(dirname "${cwd}")"
 	done
 
@@ -161,6 +167,7 @@ run_command() {
 		return 5
 	fi
 
+	#shellcheck disable=SC2145
 	exec \
 		ssh -v -t -t -q -F \
 		"${ssh_config}" default \
@@ -180,8 +187,8 @@ identify_alias() {
 
 	project_path="$(cat "${DATA_DIR}/${vm_name}/project_path")"
 
-	if [ -f "${project_path}/.workstation/commands/${1}" ]; then
-		cat "${project_path}/.workstation/commands/${1}"
+	if [ -f "${project_path}/.workstation/commands/${name}" ]; then
+		cat "${project_path}/.workstation/commands/${name}"
 	fi
 }
 
@@ -219,7 +226,7 @@ case "${1:-}" in
 	destroy)
 		vagrant_wrapper "$@"
 
-		rm -rf "${DATA_DIR}/${WORKSTATION_NAME}"
+		rm -rf "${DATA_DIR:?}/${WORKSTATION_NAME}"
 
 		;;
 	halt|provision|status|snapshot|suspend|ssh-config|ssh)
