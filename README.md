@@ -10,7 +10,7 @@ the work on the host system. This project solves this problem.
 This concept was extracts from multiple professional and personal
 uses. It was common to have multiple repositories all built and
 developed in the same way. We started out with a VM per-project.
-This became unmanagable because it required too many resources
+This became unmanageable because it required too many resources
 (CPU/Memory/Disk Space). Since there was no difference between each
 `Vargantfile` (save a few port mappings and the like) it was easier to
 combine them into one VM.
@@ -26,10 +26,9 @@ you can customize it for your needs).
 1. Clone this repository to your computer
 1. Ensure `bin/` is on `$PATH`
 1. Create a `Vagrantfile` similar to the [example](examples/Vagrantfile).
-1. Set the `$WORKSTATION_VARANTFILE` environment variable to path of
-	 the file just created.
 1. Create directories containing all projects
-1. Run `workstation up /path/to/project-directory`
+1. Run `workstation up -p /path/to/project-directory -v
+	 /path/to/vagrantfile -n vm_name`
 
 ## Usage & Running Commands
 
@@ -59,7 +58,8 @@ for more information on configuration & functionality.
 
 Install [vagrant][] & [bats][]. Then run:
 
-	$ make test
+	$ make check
+	$ make test-ci
 
 ## Contributing
 

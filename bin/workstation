@@ -2,10 +2,15 @@
 
 set -eou pipefail
 
-declare -r WORKSTATION_ROOT=$(cd "$(dirname $0)/.."; pwd)
+# NOTE: This little dance gets around the shellcheck warning of using
+# declare along with $() since it hides exit codes.
+declare workstation_root
+workstation_root="$(cd "$(dirname "${0}")/.."; pwd)"
 
-declare -r DATA_DIR="${WORKSTATION_HOME:-${HOME}/.workstation}"
-declare -r VAGRANTFILE="${WORKSTATION_VAGRANTFILE:-}"
+declare -r WORKSTATION_ROOT="${workstation_root}"
+declare -r DATA_DIR="${XDG_DATA_HOME:-${HOME}/.local/share}/workstation"
+
+unset workstation_root
 
 version() {
 	echo "Workstation $(cat "${WORKSTATION_ROOT}/VERSION")"
@@ -14,202 +19,223 @@ version() {
 usage() {
 	version
 	echo
-	echo "Usage: workstation <command> [OPTIONS]"
+	echo "Usage: "$(basename "${0}")" <command> [OPTIONS]"
+	echo
+	echo "Run "$(basename "${0}")" --help for full details"
 }
 
 help() {
-	usage
-	echo
-	cat "${WORKSTATION_ROOT}/HELP"
+	man "${WORKSTATION_ROOT}/man/dist/workstation.man1"
 }
 
-identify_alias() {
-	# Workstation specific aliases
-	if [ -e "${DATA_DIR}/project_path" ] && [ -e "$(cat "${DATA_DIR}/project_path")/.workstation/commands/${1}" ]; then
-		cat "$(cat "${DATA_DIR}/project_path")/.workstation/commands/${1}"
+vagrant_up() {
+	local OPTIND
 
-	# Global host aliases
-	elif [ -e "${DATA_DIR}/commands/${1}" ]; then
-		cat "${DATA_DIR}/commands/${1}"
+	declare project_path vm_name vagrant_file
+
+	while getopts ':p:n:v:' opt; do
+		case "${opt}" in
+			p)
+				project_path="${OPTARG}"
+				;;
+			v)
+				vagrant_file="${OPTARG}"
+				;;
+			n)
+				vm_name="${OPTARG}"
+				;;
+			\?)
+				usage 1>&2
+				return 1
+				;;
+			:)
+				usage 1>&2
+				return 1
+				;;
+		esac
+	done
+	shift $((OPTIND-1))
+
+	if [ -z "${project_path}" ] || [ -z "${vm_name}" ] || [ -z "${vagrant_file}" ]; then
+		usage 1>&2
+		return 1
+	fi
+
+	if [ ! -d "${project_path}" ]; then
+		echo "${project_path} not a directory" 1>&2
+		return 1
+	fi
+
+	if [ ! -f "${vagrant_file}" ]; then
+		echo "${vagrant_file} does not exist" 1>&2
+		return 1
+	fi
+
+	if [ -d "${DATA_DIR}/${vm_name}" ]; then
+		echo "${vm_name} already exists. Destroy the existing VM or choose a new name." 1>&2
+		return 1
+	fi
+
+	mkdir -p "${DATA_DIR}/${vm_name}"
+	echo "${project_path}" > "${DATA_DIR}/${vm_name}/project_path"
+	echo "${vagrant_file}" > "${DATA_DIR}/${vm_name}/vagrant_file"
+
+	echo "Using VAGRANTFILE: ${vagrant_file}"
+
+	export "WORKSTATION_PROJECT_PATH=${project_path}"
+	export "VAGRANT_CWD=$(dirname "${vagrant_file}")"
+
+	vagrant up "$@"
+	vagrant ssh-config > "${DATA_DIR}/${vm_name}/ssh_config"
+
+	mkdir -p "${project_path}/.workstation"
+	mkdir -p "${project_path}/.workstation/commands"
+	echo "${vm_name}" > "${project_path}/.workstation/name"
+
+	echo "Booted workstation ${vm_name} for projects in ${project_path}"
+}
+
+lookup_vm_name() {
+	declare cwd="${1}" vm_name
+
+	while [ ! -f "${cwd}/.workstation/name" ] && [ "$cwd" != / ]; do
+		cwd="$(dirname "$cwd")"
+	done
+
+	if [ "${cwd}" != / ]; then
+		cat "${cwd}/.workstation/name"
 	fi
 }
 
-subcommand="${1:-}"
+vagrant_wrapper() {
+	declare vm_name="${WORKSTATION_NAME:-}" vagrant_file project_path
 
-case "$subcommand" in
+	if [ -z "${vm_name}" ]; then
+		vm_name="$(lookup_vm_name "${PWD}")"
+	fi
+
+	if [ -z "${vm_name}" ]; then
+		echo "No workstation name provided. Set WORKSTATION_NAME or change directory." 1>&2
+		return 3
+	fi
+
+	if [ -d "${DATA_DIR}/${vm_name}" ]; then
+		project_path="$(cat "${DATA_DIR}/${vm_name}/project_path")"
+		vagrant_file="$(cat "${DATA_DIR}/${vm_name}/vagrant_file")"
+
+		export "WORKSTATION_PROJECT_PATH=${project_path}"
+		export "VAGRANT_CWD=$(dirname "${vagrant_file}")"
+		export "WORKSTATION_NAME=${vm_name}"
+
+		vagrant "$@"
+	else
+		echo "${vm_name} not provisioned. Run $(basename "${0}") up" 1>&2
+		return 1
+	fi
+}
+
+run_command() {
+	declare vm_name="${WORKSTATION_NAME:-}" project_path cwd="${PWD}" project ssh_config
+
+	if [ -z "${vm_name}" ]; then
+		vm_name="$(lookup_vm_name "${PWD}")"
+	fi
+
+	if [ -z "${vm_name}" ]; then
+		echo "No workstation name provided. Set WORKSTATION_NAME or change directory." 1>&2
+		return 3
+	fi
+
+	if [ ! -d "${DATA_DIR}/${vm_name}" ]; then
+		echo "${vm_name} not provisioned. Run $(basename "${0}") up" 1>&2
+		return 1
+	fi
+
+	project_path="$(cat "${DATA_DIR}/${vm_name}/project_path")"
+	ssh_config="${DATA_DIR}/${vm_name}/ssh_config"
+
+	while [ "$(dirname "${cwd}")" != "${project_path}" ] && [ "${cwd}" != / ]; do
+		cwd="$(dirname "${cwd}")"
+	done
+
+	if [ "${cwd}" != / ]; then
+		project="$(basename "${cwd}")"
+	fi
+
+	if [ -z "${project}" ]; then
+		echo "Cannot determine project from ${PWD}. Change directory." 1>&2
+		return 1
+	fi
+
+	if ! ssh -q -F "${ssh_config}" default true; then
+		echo "SSH config stale. Run reload and try again." 1>&2
+		return 5
+	fi
+
+	#shellcheck disable=SC2145
+	exec \
+		ssh -v -t -t -q -F \
+		"${ssh_config}" default \
+		-- "cd '/projects/${project}' && bash -l -c '$@'"
+}
+
+identify_alias() {
+	declare vm_name="${WORKSTATION_NAME:-}" cwd="${PWD}" name="${1}" project_path
+
+	if [ -z "${vm_name}" ]; then
+		vm_name="$(lookup_vm_name "${PWD}")"
+	fi
+
+	if [ -z "${vm_name}" ]; then
+		return 0
+	fi
+
+	project_path="$(cat "${DATA_DIR}/${vm_name}/project_path")"
+
+	if [ -f "${project_path}/.workstation/commands/${name}" ]; then
+		cat "${project_path}/.workstation/commands/${name}"
+	fi
+}
+
+wildcard_command() {
+	declare command_alias
+
+	if [ -n "${1:-}" ] && [ -n "$(identify_alias "${1}")" ]; then
+		command_alias="$(identify_alias "${1}")"
+
+		shift
+
+		run_command "${command_alias}" "$@"
+	else
+		usage 1>&2
+		return 1
+	fi
+}
+
+case "${1:-}" in
 	up)
-		if [ -z "$VAGRANTFILE" ] || [ ! -f "$VAGRANTFILE" ]; then
-			echo "No VAGRANTFILE found at WORKSTATION_VAGRANTFILE" 1>&2;
-			exit 1
-		fi
+		shift
 
-		project_path="${2:-}"
-
-		if [ -z "$project_path" ]; then
-			echo "PROJECT_PATH missing" 1>&2
-			exit 1
-		fi
-
-		if [ ! -d "$project_path" ]; then
-			echo "${project_path} not a directory" 1>&2
-			exit 1
-		fi
-
-		shift ; shift
-
-		mkdir -p "$DATA_DIR"
-		echo "$project_path" > "${DATA_DIR}/project_path"
-
-		echo "Using VAGRANTFILE: ${VAGRANTFILE}"
-
-		export WORKSTATION_PROJECT_PATH="$project_path"
-
-		pushd "$(dirname "$VAGRANTFILE")" > /dev/null
-
-		vagrant up "$@"
-		vagrant ssh-config > "${DATA_DIR}/ssh_config"
-
-		popd > /dev/null
-
-		echo "Booted workstation for projects in ${project_path}"
-
+		vagrant_up "$@"
 		;;
 	run)
 		shift
 
-		ssh_config="${DATA_DIR}/ssh_config"
-
-		if [ ! -f "$ssh_config" ]; then
-			echo "No SSH config. Run boot and try again." 1>&2
-			exit 1
-		fi
-
-		project_path=$(cat "${DATA_DIR}/project_path")
-		project=
-
-		while getopts ":p:" opt; do
-			case $opt in
-				p)
-					if [ -d "${project_path}/${OPTARG}" ]; then
-						project="${OPTARG}"
-					else
-						matches=$(find "$project_path" -type d -maxdepth 1 -name "*${OPTARG}*")
-
-						if [ -n "$matches" ] && [ $(echo "$matches" | wc -l) -eq 1 ]; then
-							project="$(basename "$matches")"
-						else
-							echo "${OPTARG} matched too many projects:" 2>&1
-							echo "$matches" 2>&1
-							exit 1
-						fi
-					fi
-					;;
-				\?)
-					echo "Invalid option: -$OPTARG" 1>&2
-					exit 1
-					;;
-			esac
-		done
-
-		shift $((OPTIND-1))
-
-		if [ $# -eq 0 ]; then
-			echo "No command given" 1>&2
-			exit 1
-		fi
-
-		if [ -z "$project" ]; then
-			cwd="$PWD"
-			while [ "$(dirname $cwd)" != "$project_path" ] && [ "$cwd" != / ]; do
-				cwd="$(dirname "$cwd")"
-			done
-
-			if [ "$cwd" != / ]; then
-				project="$(basename "$cwd")"
-			fi
-		fi
-
-		if [ -z "$project" ]; then
-			echo "Cannot determine project for ${PWD}. Provide -p PROJECT or change directory." 1>&2
-			exit 1
-		fi
-
-		if ! ssh -q -F "$ssh_config" default true; then
-			echo "SSH config stale. Run reload and try again." 1>&2
-			exit 1
-		fi
-
-		internal_directory="/projects/${project}"
-		exec ssh -t -t -q -F "$ssh_config" default -- "cd ${internal_directory} && bash -l -c '$@'"
-
+		run_command "$@"
 		;;
 	reload)
-		if [ -z "$VAGRANTFILE" ] || [ ! -f "$VAGRANTFILE" ]; then
-			echo "No VAGRANTFILE found at WORKSTATION_VAGRANTFILE" 1>&2
-			exit 1
-		fi
-
-		if [ ! -e "${DATA_DIR}/project_path" ]; then
-			echo "Workstation not booted. Run the up command and try again" 1>&2
-			exit 1
-		fi
-
-		shift
-
-		export WORKSTATION_PROJECT_PATH="$(cat "${DATA_DIR}/project_path")"
-
-		pushd "$(dirname "$VAGRANTFILE")" > /dev/null
-
-		vagrant reload "$@"
-		vagrant ssh-config > "${DATA_DIR}/ssh_config"
-
-		popd > /dev/null
-
-		;;
-	edit)
-		if [ -z "$VAGRANTFILE" ] || [ ! -f "$VAGRANTFILE" ]; then
-			echo "No VAGRANTFILE found at WORKSTATION_VAGRANTFILE" 1>&2;
-			exit 1
-		fi
-
-		${EDITOR} "$VAGRANTFILE"
+		vagrant_wrapper "$@"
+		vagrant ssh-config > "${DATA_DIR}/${WORKSTATION_NAME}/ssh_config"
 
 		;;
 	destroy)
-		if [ -z "$VAGRANTFILE" ] || [ ! -f "$VAGRANTFILE" ]; then
-			echo "No VAGRANTFILE found at WORKSTATION_VAGRANTFILE" 1>&2;
-			exit 1
-		fi
+		vagrant_wrapper "$@"
 
-		export VAGRANT_CWD="$(dirname "$VAGRANTFILE")"
-
-		vagrant "$@"
-
-		rm -rf "${DATA_DIR}/ssh_config"
-		rm -rf "${DATA_DIR}/project_path"
+		rm -rf "${DATA_DIR:?}/${WORKSTATION_NAME}"
 
 		;;
-	halt|suspend|status|ssh-config|ssh)
-		if [ -z "$VAGRANTFILE" ] || [ ! -f "$VAGRANTFILE" ]; then
-			echo "No VAGRANTFILE found at WORKSTATION_VAGRANTFILE" 1>&2;
-			exit 1
-		fi
-
-		export VAGRANT_CWD="$(dirname "$VAGRANTFILE")"
-
-		exec vagrant "$@"
-
-		;;
-
-	provision)
-		if [ -z "$VAGRANTFILE" ] || [ ! -f "$VAGRANTFILE" ]; then
-			echo "No VAGRANTFILE found at WORKSTATION_VAGRANTFILE" 1>&2;
-			exit 1
-		fi
-
-		cd "$(dirname "$VAGRANTFILE")"
-
-		exec vagrant provision
+	halt|provision|status|snapshot|suspend|ssh-config|ssh)
+		vagrant_wrapper "$@"
 
 		;;
 	version|--version)
@@ -221,36 +247,7 @@ case "$subcommand" in
 
 		;;
 	*)
-		if [ -n "${subcommand}" ] && [ -n "$(identify_alias "$1")" ]; then
-			command_alias="$(identify_alias "$1")"
-
-			shift
-
-			project=
-
-			while getopts ":p:" opt; do
-				case $opt in
-					p)
-						project="${OPTARG}"
-						;;
-					\?)
-						echo "Invalid option: -$OPTARG" 1>&2
-						exit 1
-						;;
-				esac
-			done
-
-			shift $((OPTIND-1))
-
-			if [ -n "$project" ] ; then
-				exec $0 run -p "$project" "$command_alias" "$@"
-			else
-				exec $0 run "$command_alias" "$@"
-			fi
-		else
-			usage
-			exit 1
-		fi
+		wildcard_command "$@"
 
 		;;
 esac

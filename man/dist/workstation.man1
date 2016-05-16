@@ -1,0 +1,232 @@
+'\" t
+.\"     Title: workstation
+.\"    Author: Adam Hawkins
+.\" Generator: Asciidoctor 1.5.4
+.\"      Date: 2016-05-13
+.\"    Manual: WORKSTATION
+.\"    Source: WORKSTATION
+.\"  Language: English
+.\"
+.TH "WORKSTATION" "1" "2016-05-13" "WORKSTATION" "WORKSTATION"
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.ss \n[.ss] 0
+.nh
+.ad l
+.de URL
+\\$2 \(laURL: \\$1 \(ra\\$3
+..
+.if \n[.g] .mso www.tmac
+.LINKSTYLE blue R &lt;&gt;
+.SH "NAME"
+workstation \- Manage Vagrant backed environments quickly from host
+.SH "SYNOPSIS"
+.sp
+\fBworkstation\fP [OPTIONS] SUBCOMMAND
+.SH "SUBCOMMANDS"
+.sp
+\fIworkstation\fP works by setting environment variables and delegating the
+heavy lifting to \fIvagrant\fP. Thus, most of the commands available through
+\fIvagrant\fP are available through to \fIworkstation\fP and execute against the
+appropriate VM.
+.sp
+\fBup\fP \fB\-n\fP \fINAME\fP \fB\-v\fP \fIVAGRANTFILE\fP \fB\-p\fP \fIPROJECT_PATH\fP [\-\- VAGRANT_OPTIONS]
+.RS 4
+Boot the workstation for \fIPROJECT_PATH\fP with a specific using
+the \fIVAGRANTFILE\fP. \fIVAGRANTFILE\fP must be an absolute path.
+\fIVAGRANT_OPTIONS\fP are forwarded to \fIvagrant up\fP.
+.RE
+.sp
+\fBrun\fP \fBCOMMAND\fP \fI[COMMAND_OPTIONS]\fP
+.RS 4
+Execute command in matching project directory. This primary use case.
+.RE
+.sp
+\fBCUSTOM\fP \fI[COMMAND_OPTIONS]\fP
+.RS 4
+\fBCUSTOM\fP may also be a custom command. Define a custom command by
+creating a file in \fI$PROJECT_PATH/.workstation/commands/COMMAND\fP
+(See configuration section below). The content of the file is
+then passed to \fBrun\fP. Assume \fIPROJECT_PATH\fP is the value used for
+\fIworkstation up \-p PROJECT_PATH\fP.
+.RE
+.SH "FORWARDED COMMANDS"
+.sp
+The following subcommands are forwarded directly to \fIvagrant\fP. They are
+invoked like the normal \fIvagrant\fP command just with the appropriate
+virtual machine selected and exported environment variables. Refer to
+the vagrant manual for complete information on these commands.
+.sp
+Usage: \fBworkstation\fP \fISUBCOMMAND\fP \fI[OPTIONS]\fP
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+reload
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+destroy
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+halt
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+provision
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+status
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+snapshot
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+suspend
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+ssh
+.RE
+.SH "ENVIRONMENT VARIABLES"
+.sp
+\fIXDG_DATA_HOME\fP
+.RS 4
+Set the base directory to write artifact files to. Defaults to
+~/.local/usr/share.
+.RE
+.sp
+\fIWORKSTATION_NAME\fP
+.RS 4
+Set to explicitly avoid file system workstation lookup. Primarily
+useful in scripting.
+.RE
+.SH "CUSTOM COMMANDS"
+.sp
+Users should configure custom commands for commonly executed commands.
+Say you ended up running "workstation run make test" over and over
+again. Create a custom command named \fItest\fP like:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ echo "make test" > $PROJECT_PATH/.workstation/commands/test
+$ workstation test
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+Custom commands are shared across the whole workstation machine, so they
+can be used on any project. Another recommended use case: opening a
+terminal for the current project.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ echo "bash \-l" > $PROJECT_PATH/.workstation/commands/shell
+$ workstation shell
+.fi
+.if n \{\
+.RE
+.\}
+.SH "EXIT STATUS"
+.sp
+\fB0\fP
+.RS 4
+Success
+.RE
+.sp
+\fB1\fP
+.RS 4
+Failure. Internal or external failure.
+.RE
+.sp
+\fB3\fP
+.RS 4
+ Failure. Cannot determine VM from file system or \fIWORKSTATION_NAME\fP
+not set.
+.RE
+.sp
+\fB5\fP
+.RS 4
+ Failure. SSH config stale. Run "workstation reload" and retry previous
+command.
+.RE
+.SH "RESOURCES"
+.sp
+Source Code
+.RS 4
+.URL "https://github.com/ahawkins/vagrant\-workstation" "" ""
+.RE
+.SH "COPYING"
+.sp
+Copyright (c) 2016 Adam Hawkins.
+.sp
+Free use of this software is granted under the terms of the MIT License.
+.SH "AUTHOR(S)"
+.sp
+\fBAdam Hawkins\fP
+.RS 4
+Author(s).
+.RE
