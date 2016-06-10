@@ -71,11 +71,6 @@ vagrant_up() {
 		return 1
 	fi
 
-	if [ -d "${DATA_DIR}/${vm_name}" ]; then
-		echo "${vm_name} already exists. Destroy the existing VM or choose a new name." 1>&2
-		return 1
-	fi
-
 	mkdir -p "${DATA_DIR}/${vm_name}"
 	echo "${project_path}" > "${DATA_DIR}/${vm_name}/project_path"
 	echo "${vagrant_file}" > "${DATA_DIR}/${vm_name}/vagrant_file"
