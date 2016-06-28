@@ -20,6 +20,12 @@ heavy lifting to _vagrant_. Thus, most of the commands available through
 _vagrant_ are available through to _workstation_ and execute against the
 appropriate VM.
 
+*exec* *COMMAND*::
+	Run *COMMAND* inside the guest. This does not require you to be in a
+	specific project directory on the host system. Instead it requires
+	that the _WORKSTATION_NAME_ environment variable is set to determine
+	the correct machine.
+
 *up* *-n* _NAME_ *-v* _VAGRANTFILE_ *-p* _PROJECT_PATH_ [-- VAGRANT_OPTIONS]::
 	Boot the workstation for _PROJECT_PATH_ with a specific using
 	the _VAGRANTFILE_. _VAGRANTFILE_ must be an absolute path.

@@ -174,6 +174,33 @@ run_command() {
 		-- "cd '/projects/${project}' && bash -l -c '$@'"
 }
 
+exec_command() {
+	declare vm_name="${WORKSTATION_NAME:-}" ssh_config
+
+	if [ -z "${vm_name}" ]; then
+		echo "No workstation name provided. Set WORKSTATION_NAME." 1>&2
+		return 3
+	fi
+
+	if [ ! -d "${DATA_DIR}/${vm_name}" ]; then
+		echo "${vm_name} not provisioned. Run $(basename "${0}") up" 1>&2
+		return 1
+	fi
+
+	ssh_config="${DATA_DIR}/${vm_name}/ssh_config"
+
+	if ! ssh -q -F "${ssh_config}" default true; then
+		echo "SSH config stale. Run reload and try again." 1>&2
+		return 5
+	fi
+
+	#shellcheck disable=SC2145
+	exec \
+		ssh -v -t -t -q -F \
+		"${ssh_config}" default \
+		-- "bash -l -c '$@'"
+}
+
 identify_alias() {
 	declare vm_name="${WORKSTATION_NAME:-}" cwd="${PWD}" name="${1}" project_path
 
@@ -208,6 +235,11 @@ wildcard_command() {
 }
 
 case "${1:-}" in
+	exec)
+		shift
+
+		exec_command "$@"
+		;;
 	up)
 		shift
 
