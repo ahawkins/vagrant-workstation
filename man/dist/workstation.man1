@@ -2,12 +2,12 @@
 .\"     Title: workstation
 .\"    Author: Adam Hawkins
 .\" Generator: Asciidoctor 1.5.4
-.\"      Date: 2016-05-13
+.\"      Date: 2016-06-28
 .\"    Manual: WORKSTATION
 .\"    Source: WORKSTATION
 .\"  Language: English
 .\"
-.TH "WORKSTATION" "1" "2016-05-13" "WORKSTATION" "WORKSTATION"
+.TH "WORKSTATION" "1" "2016-06-28" "WORKSTATION" "WORKSTATION"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -29,6 +29,14 @@ workstation \- Manage Vagrant backed environments quickly from host
 heavy lifting to \fIvagrant\fP. Thus, most of the commands available through
 \fIvagrant\fP are available through to \fIworkstation\fP and execute against the
 appropriate VM.
+.sp
+\fBexec\fP \fBCOMMAND\fP
+.RS 4
+Run \fBCOMMAND\fP inside the guest. This does not require you to be in a
+specific project directory on the host system. Instead it requires
+that the \fIWORKSTATION_NAME\fP environment variable is set to determine
+the correct machine.
+.RE
 .sp
 \fBup\fP \fB\-n\fP \fINAME\fP \fB\-v\fP \fIVAGRANTFILE\fP \fB\-p\fP \fIPROJECT_PATH\fP [\-\- VAGRANT_OPTIONS]
 .RS 4
