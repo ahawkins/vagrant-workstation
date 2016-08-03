@@ -54,6 +54,7 @@ Usage: *workstation* _SUBCOMMAND_ _[OPTIONS]_
 * destroy
 * halt
 * provision
+* rsync
 * status
 * snapshot
 * suspend

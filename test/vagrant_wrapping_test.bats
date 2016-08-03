@@ -12,7 +12,7 @@ setup() {
 }
 
 @test "command reads name from file system" {
-	declare -a WRAPPED_COMMANDS=( destroy reload provision halt suspend ssh-config ssh )
+	declare -a WRAPPED_COMMANDS=( destroy reload provision halt suspend ssh-config ssh rsync )
 
 	cat > "${scratch}/vagrant" <<'EOF'
 	#!/usr/bin/env bash
@@ -41,7 +41,7 @@ EOF
 }
 
 @test "command fails if cannot determine name from file system" {
-	declare -a WRAPPED_COMMANDS=( destroy reload provision halt suspend ssh-config ssh )
+	declare -a WRAPPED_COMMANDS=( destroy reload provision halt suspend ssh-config ssh rsync )
 
 	cat > "${scratch}/vagrant" <<'EOF'
 	#!/usr/bin/env bash
@@ -70,7 +70,7 @@ EOF
 }
 
 @test "command WORKSTATION_NAME prefers file system based lookup" {
-	declare -a WRAPPED_COMMANDS=( destroy reload provision halt status snapshot suspend ssh-config ssh )
+	declare -a WRAPPED_COMMANDS=( destroy reload provision halt status snapshot suspend ssh-config ssh rsync)
 
 	cat > "${scratch}/vagrant" <<'EOF'
 	#!/usr/bin/env bash
@@ -100,7 +100,7 @@ EOF
 }
 
 @test "command fails if machine does not exist" {
-	declare -a WRAPPED_COMMANDS=( destroy reload provision halt status snapshot suspend ssh-config ssh )
+	declare -a WRAPPED_COMMANDS=( destroy reload provision halt status snapshot suspend ssh-config ssh rsync )
 
 	cat > "${scratch}/vagrant" <<'EOF'
 	#!/usr/bin/env bash
@@ -122,7 +122,7 @@ EOF
 }
 
 @test "commands are wrapped appropriately" {
-	declare -a WRAPPED_COMMANDS=( destroy reload provision halt status snapshot suspend ssh-config ssh )
+	declare -a WRAPPED_COMMANDS=( destroy reload provision halt status snapshot suspend ssh-config ssh rsync )
 
 	cat > "${scratch}/vagrant" <<'EOF'
 	#!/usr/bin/env bash
