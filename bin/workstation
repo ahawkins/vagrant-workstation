@@ -261,7 +261,7 @@ case "${1:-}" in
 		rm -rf "${DATA_DIR:?}/${WORKSTATION_NAME}"
 
 		;;
-	halt|provision|status|snapshot|suspend|ssh-config|ssh)
+	halt|provision|rsync|status|snapshot|suspend|ssh-config|ssh)
 		vagrant_wrapper "$@"
 
 		;;
